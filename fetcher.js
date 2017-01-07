@@ -150,19 +150,19 @@ function getColors(manacost, colorIndicator, oracleText) {
 		return 'C';
 	}
 
-	if (manacost.includes('W') || (colorIndicator && colorIndicator.includes('white') || colorIndicator.includes('all colors'))) {
+	if (manacost.includes('W') || (colorIndicator && (colorIndicator.includes('white') || colorIndicator.includes('all colors')))) {
 		colors += 'W';
 	}
-	if (manacost.includes('U') || (colorIndicator && colorIndicator.includes('blue') || colorIndicator.includes('all colors'))) {
+	if (manacost.includes('U') || (colorIndicator && (colorIndicator.includes('blue') || colorIndicator.includes('all colors')))) {
 		colors += 'U';
 	}
-	if (manacost.includes('B') || (colorIndicator && colorIndicator.includes('black') || colorIndicator.includes('all colors'))) {
+	if (manacost.includes('B') || (colorIndicator && (colorIndicator.includes('black') || colorIndicator.includes('all colors')))) {
 		colors += 'B';
 	}
-	if (manacost.includes('R') || (colorIndicator && colorIndicator.includes('red') || colorIndicator.includes('all colors'))) {
+	if (manacost.includes('R') || (colorIndicator && (colorIndicator.includes('red') || colorIndicator.includes('all colors')))) {
 		colors += 'R';
 	}
-	if (manacost.includes('G') || (colorIndicator && colorIndicator.includes('green') || colorIndicator.includes('all colors'))) {
+	if (manacost.includes('G') || (colorIndicator && (colorIndicator.includes('green') || colorIndicator.includes('all colors')))) {
 		colors += 'G';
 	}
 	if (colors.length > 1) {
