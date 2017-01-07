@@ -7,7 +7,7 @@ function makeCardEmbed(data) {
 	var embed = {
 		title: data.title,
 		type: 'rich',
-		url: 'https://mtg.wtf/card?q=!' + data.title.replace(/ /g, '%20'),
+		url: 'https://mtg.wtf/card?q=!' + encodeURIComponent(data.title),
 		footer: {
 			text: client.user.username + ' | v' + (process.env.npm_package_version || require('./package.json').version),
 			icon_url: client.user.avatarURL
@@ -89,7 +89,7 @@ function makeCardEmbed(data) {
 	if (data.otherpart) {
 		embed.fields.push({
 			name: 'Other Part',
-			value: '[' + data.otherpart + '](https://mtg.wtf/card?q=!' + data.otherpart.replace(/ /g, '%20') + ')',
+			value: '[' + data.otherpart + '](https://mtg.wtf/card?q=!' + encodeURIComponent(data.otherpart) + ')',
 			inline: true
 		});
 	}
@@ -110,9 +110,9 @@ function makeCardEmbed(data) {
 				rulingsText += '**' + data.rulings[i].date + '** ' + data.rulings[i].text + '\n';
 			} else {
 				if (i === 0) {
-					rulingsText += '[' + data.rulings.length + ' rulings](https://mtg.wtf/card?q=!' + data.title.replace(/ /g, '%20') + ')';
+					rulingsText += '[' + data.rulings.length + ' rulings](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
 				} else {
-					rulingsText += '[' + (data.rulings.length - i) + ' more](https://mtg.wtf/card?q=!' + data.title.replace(/ /g, '%20') + ')';
+					rulingsText += '[' + (data.rulings.length - i) + ' more](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
 				}
 				break;
 			}

@@ -11,7 +11,7 @@ function fetchCard(cardName) {
 	return new Promise(function (resolve, reject) {
 		https.request({
 			hostname: 'mtg.wtf',
-			path: '/card?q=!' + cardName.toLowerCase().replace(/ /g, '%20')
+			path: '/card?q=!' + encodeURIComponent(cardName)
 		}, function (response) {
 			var responseData = '';
 
