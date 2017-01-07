@@ -65,11 +65,11 @@ client.on('message', function (message) {
 	if (matches) {
 		var uniqueMatches = [];
 		for (let match of matches) {
+			match = match.slice(2, -2).trim().replace(/ +/g, ' ');
 			if (uniqueMatches.includes(match.toLowerCase())) {
 				return;
 			}
 			uniqueMatches.push(match.toLowerCase());
-			match = match.slice(2, -2);
 
 			if (/^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
 				//match is a rule
