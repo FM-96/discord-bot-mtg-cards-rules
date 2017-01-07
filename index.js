@@ -60,7 +60,7 @@ client.on('message', function (message) {
 		return;
 	}
 
-	var matches = message.content.match(/\[\[[0-9a-zA-Z.,:'\- ]+\]\]/g);
+	var matches = message.content.match(/\[\[[^\n]+\]\]/g);
 
 	if (matches) {
 		var uniqueMatches = [];
