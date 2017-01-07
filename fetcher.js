@@ -53,7 +53,10 @@ function fetchCard(cardName) {
 			if (cardObject.types.includes('Creature') || cardObject.types.includes('Vehicle')) {
 				cardObject.pt = $('.power_toughness').text().trim();
 			} else if (cardObject.types.includes('Planeswalker')) {
-				cardObject.loyalty = $.text().match(/Loyalty:\s+([0-9]+)/)[1];
+				var loyalty = $.text().match(/Loyalty:\s+([0-9]+)/);
+				if (loyalty) {
+					cardObject.loyalty = loyalty[1];
+				}
 			}
 			var otherpart = $.text().match(/Card has other part:\s+([^\n.]+)/);
 			if (otherpart) {
