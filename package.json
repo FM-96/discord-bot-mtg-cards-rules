@@ -1,0 +1,21 @@
+{
+  "name": "discord-bot-mtg-cards-rules",
+  "version": "0.1.0",
+  "description": "Looks up cards and rules from https://mtg.wtf/ and http://yawgatog.com/, respectively.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FM-96/discord-bot-mtg-cards-rules.git"
+  },
+  "author": "Felix Müllner",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^0.22.0",
+    "discord.js": "^11.0.0",
+    "minimist": "^1.2.0",
+    "winston": "^2.3.0"
+  }
+}
