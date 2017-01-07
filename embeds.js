@@ -1,11 +1,17 @@
 module.exports.makeCardEmbed = makeCardEmbed;
 module.exports.makeRuleEmbed = makeRuleEmbed;
 
+var client = require('./client.js');
+
 function makeCardEmbed(data) {
 	var embed = {
 		title: data.title,
 		type: 'rich',
 		url: 'https://mtg.wtf/card?q=!' + data.title.replace(/ /g, '%20'),
+		footer: {
+			text: client.user.username + ' | v' + (process.env.npm_package_version || require('./package.json').version),
+			icon_url: client.user.avatarURL
+		},
 		fields: []
 	};
 

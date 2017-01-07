@@ -8,7 +8,7 @@ var embeds = require('./embeds.js');
 var fetcher = require('./fetcher.js');
 
 var botToken = null;
-var client = new Discord.Client();
+var client = require('./client.js');
 
 //set logging level
 var loggingLevel = 'info';
