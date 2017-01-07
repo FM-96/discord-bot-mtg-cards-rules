@@ -39,13 +39,18 @@ function fetchCard(cardName) {
 				cardObject.cost = 'N/A';
 			}
 			cardObject.cmc = getCmc(cardObject.cost);
-			cardObject.colors = getColors(cardObject.cost);
 			cardObject.types = $('.typeline').text().trim();
+			var colorIndicator = null;
 			if ($('.oracle').length) {
+				if ($('.oracle > .color_indicator').length) {
+					colorIndicator = $('.oracle > .color_indicator').text();
+					$('.oracle > .color_indicator').remove();
+				}
 				$('.oracle').html($('.oracle').html().replace(/\s*<br>\s*/g, '\n\n'));
 				cardObject.oracle = $('.oracle').text().trim();
 			}
-			cardObject.ci = getCi(cardObject.colors, cardObject.oracle);
+			cardObject.colors = getColors(cardObject.cost, colorIndicator, cardObject.oracle);
+			cardObject.ci = getCi(cardObject.cost, cardObject.colors, cardObject.oracle);
 			if ($('.flavor').length) {
 				$('.flavor').html($('.flavor').html().replace(/<br>/g, '\n'));
 				cardObject.flavor = $('.flavor').text().trim();
@@ -88,21 +93,21 @@ function fetchRule(rule) {
 	//TODO
 }
 
-function getCi(cardColors, oracleText) {
+function getCi(manacost, cardColors, oracleText) {
 	var ci = 'C';
-	if (cardColors.includes('W') || (oracleText && oracleText.match(/\{W\}/))) {
+	if (manacost.includes('W') || cardColors.includes('W') || (oracleText && oracleText.match(/\{W\}/))) {
 		ci += 'W';
 	}
-	if (cardColors.includes('U') || (oracleText && oracleText.match(/\{U\}/))) {
+	if (manacost.includes('U') || cardColors.includes('U') || (oracleText && oracleText.match(/\{U\}/))) {
 		ci += 'U';
 	}
-	if (cardColors.includes('B') || (oracleText && oracleText.match(/\{B\}/))) {
+	if (manacost.includes('B') || cardColors.includes('B') || (oracleText && oracleText.match(/\{B\}/))) {
 		ci += 'B';
 	}
-	if (cardColors.includes('R') || (oracleText && oracleText.match(/\{R\}/))) {
+	if (manacost.includes('R') || cardColors.includes('R') || (oracleText && oracleText.match(/\{R\}/))) {
 		ci += 'R';
 	}
-	if (cardColors.includes('G') || (oracleText && oracleText.match(/\{G\}/))) {
+	if (manacost.includes('G') || cardColors.includes('G') || (oracleText && oracleText.match(/\{G\}/))) {
 		ci += 'G';
 	}
 	if (ci.length > 1) {
@@ -138,21 +143,26 @@ function getCmc(manacost) {
 	return cmc;
 }
 
-function getColors(manacost) {
+function getColors(manacost, colorIndicator, oracleText) {
 	var colors = 'C';
-	if (manacost.includes('W')) {
+
+	if (oracleText && (oracleText.match(/(^|\n|, )[Dd]evoid[,\n]/) || oracleText.includes(' is colorless'))) {
+		return 'C';
+	}
+
+	if (manacost.includes('W') || (colorIndicator && colorIndicator.includes('white') || colorIndicator.includes('all colors'))) {
 		colors += 'W';
 	}
-	if (manacost.includes('U')) {
+	if (manacost.includes('U') || (colorIndicator && colorIndicator.includes('blue') || colorIndicator.includes('all colors'))) {
 		colors += 'U';
 	}
-	if (manacost.includes('B')) {
+	if (manacost.includes('B') || (colorIndicator && colorIndicator.includes('black') || colorIndicator.includes('all colors'))) {
 		colors += 'B';
 	}
-	if (manacost.includes('R')) {
+	if (manacost.includes('R') || (colorIndicator && colorIndicator.includes('red') || colorIndicator.includes('all colors'))) {
 		colors += 'R';
 	}
-	if (manacost.includes('G')) {
+	if (manacost.includes('G') || (colorIndicator && colorIndicator.includes('green') || colorIndicator.includes('all colors'))) {
 		colors += 'G';
 	}
 	if (colors.length > 1) {
