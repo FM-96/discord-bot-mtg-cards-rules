@@ -63,7 +63,12 @@ client.on('message', function (message) {
 	var matches = message.content.match(/\[\[[0-9a-zA-Z.,:'\- ]+\]\]/g);
 
 	if (matches) {
+		var uniqueMatches = [];
 		for (let match of matches) {
+			if (uniqueMatches.includes(match.toLowerCase())) {
+				return;
+			}
+			uniqueMatches.push(match.toLowerCase());
 			match = match.slice(2, -2);
 
 			if (/^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
