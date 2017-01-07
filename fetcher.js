@@ -136,6 +136,11 @@ function getCmc(manacost) {
 			cmc += Number(cost.split('/')[0].slice(1));
 		}
 	}
+	//halfmana from unsets
+	var halfManaCosts = manacost.match(/\{H[WUBRGC]\}/g);
+	if (halfManaCosts) {
+		cmc += halfManaCosts.length/2;
+	}
 	var genericCosts = manacost.match(/\{([0-9]+)\}/);
 	if (genericCosts) {
 		cmc += Number(genericCosts[1]);

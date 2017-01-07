@@ -39,7 +39,7 @@ function makeCardEmbed(data) {
 
 	embed.fields.push({
 		name: 'CMC',
-		value: data.cmc,
+		value: String(data.cmc),
 		inline: true
 	});
 
