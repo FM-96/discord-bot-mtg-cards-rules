@@ -63,7 +63,6 @@ client.on('message', function (message) {
 	var matches = message.content.match(/\[\[[0-9a-zA-Z.,:\- ]+\]\]/g);
 
 	if (matches) {
-		//TODO
 		for (let match of matches) {
 			match = match.slice(2, -2);
 
@@ -85,16 +84,12 @@ client.on('message', function (message) {
 					}
 				).then(
 					function (embed) {
-						//TODO
-						//return message.channel.sendMessage('```json\n' + JSON.stringify(embed, null, '\t') + '\n```');
-						//return message.channel.sendMessage('```json\n' + JSON.stringify(embed.fields, null, '\t') + '\n```');
 						if (embed !== false) {
 							return message.channel.sendEmbed(embed);
 						}
 					}
 				).catch(
 					function (error) {
-						//TODO
 						winston.error(error);
 					}
 				);
