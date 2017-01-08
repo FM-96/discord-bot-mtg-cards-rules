@@ -63,9 +63,18 @@ function fetchCard(cardName) {
 					cardObject.loyalty = loyalty[1];
 				}
 			}
-			var otherpart = $.text().match(/Card has other part:\s+([^\n.]+)/);
-			if (otherpart) {
-				cardObject.otherpart = otherpart[1];
+			var $otherparts;
+			$('.infolabel').each(function (i, elem) {
+				if ($(this).text().includes('Card has other part')) {
+					$otherparts = $(this);
+					return false
+				}
+			});
+			if ($otherparts) {
+				cardObject.otherparts = [];
+				$otherparts.find('a').each(function (i, elem) {
+					cardObject.otherparts.push($(this).text().trim());
+				});
 			}
 			if ($('.legalities').length) {
 				cardObject.legalities = '';

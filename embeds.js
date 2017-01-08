@@ -86,10 +86,14 @@ function makeCardEmbed(data) {
 		inline: true
 	});
 
-	if (data.otherpart) {
+	if (data.otherparts) {
+		var parts = '';
+		for (var part of data.otherparts) {
+			parts += '[' + part + '](https://mtg.wtf/card?q=!' + encodeURIComponent(part) + ')\n';
+		}
 		embed.fields.push({
-			name: 'Other Part',
-			value: '[' + data.otherpart + '](https://mtg.wtf/card?q=!' + encodeURIComponent(data.otherpart) + ')',
+			name: data.otherparts.length === 1 ? 'Other Part' : 'Other Parts',
+			value: parts,
 			inline: true
 		});
 	}
