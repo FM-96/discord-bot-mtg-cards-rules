@@ -93,6 +93,8 @@ function fetchCard(cardName) {
 				});
 			}
 
+			cardObject.image = 'https://mtg.wtf' + $('.card_picture').attr('src');
+
 			return cardObject;
 		}
 	);

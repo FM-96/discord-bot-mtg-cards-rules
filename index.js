@@ -60,12 +60,13 @@ client.on('message', function (message) {
 		return;
 	}
 
-	var matches = message.content.match(/\[\[[^\n]+?\]\]/g);
+	var matches = message.content.match(/\[(?:!?|\??)*\[[^\n]+?\]\]/g);
 
 	if (matches) {
 		var uniqueMatches = [];
 		for (let match of matches) {
-			match = match.slice(2, -2).trim().replace(/ +/g, ' ').toLowerCase();
+			var flags = match.slice(1, match.indexOf('[', 1));
+			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
 			if (uniqueMatches.includes(match)) {
 				return;
 			}
@@ -80,17 +81,24 @@ client.on('message', function (message) {
 				}
 			} else {
 				//match is a card
+				var extended = flags.includes('?');
+				var picture = flags.includes('!');
 				fetcher.fetchCard(match).then(
 					function (result) {
 						if (result === false) {
 							return false;
 						}
-						return embeds.makeCardEmbed(result);
+						return embeds.makeCardEmbed(result, extended);
 					}
 				).then(
 					function (embed) {
 						if (embed !== false) {
-							return message.channel.sendEmbed(embed);
+							var options = {};
+							if (picture) {
+								options.file = embed.image.url;
+							}
+							delete embed.image;
+							return message.channel.sendEmbed(embed, '', options);
 						}
 					}
 				).catch(

@@ -3,7 +3,7 @@ module.exports.makeRuleEmbed = makeRuleEmbed;
 
 var client = require('./client.js');
 
-function makeCardEmbed(data) {
+function makeCardEmbed(data, extended) {
 	var embed = {
 		title: data.title,
 		type: 'rich',
@@ -11,6 +11,9 @@ function makeCardEmbed(data) {
 		footer: {
 			text: client.user.username + ' | v' + (process.env.npm_package_version || require('./package.json').version),
 			icon_url: client.user.avatarURL
+		},
+		image: {
+			url: data.image
 		},
 		fields: []
 	};
@@ -80,11 +83,13 @@ function makeCardEmbed(data) {
 		inline: false
 	});
 
-	embed.fields.push({
-		name: 'Legalities',
-		value: data.legalities,
-		inline: true
-	});
+	if (extended) {
+		embed.fields.push({
+			name: 'Legalities',
+			value: data.legalities,
+			inline: true
+		});
+	}
 
 	if (data.otherparts) {
 		var parts = '';
@@ -98,34 +103,36 @@ function makeCardEmbed(data) {
 		});
 	}
 
-	var usedCharacters = 0;
-	for (var field of embed.fields) {
-		usedCharacters += field.name.length + String(field.value).length;
-	}
-
-	if (data.rulings) {
-		var rulingsText = '';
-		for (var i = 0; i < data.rulings.length; ++i) {
-			//check if the next ruling still fits in the message and if not, make a [x more] link
-			//Note: I originally thought the character limit is 2000, but this is apparently incorrect. The number below (1200) was found through trial and error
-			var rulingLength = data.rulings[i].date.length + data.rulings[i].text.length + 6;
-			if (usedCharacters + rulingLength <= 1200) {
-				usedCharacters += rulingLength;
-				rulingsText += '**' + data.rulings[i].date + '** ' + data.rulings[i].text + '\n';
-			} else {
-				if (i === 0) {
-					rulingsText += '[' + data.rulings.length + ' rulings](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
-				} else {
-					rulingsText += '[' + (data.rulings.length - i) + ' more](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
-				}
-				break;
-			}
+	if (extended) {
+		var usedCharacters = 0;
+		for (var field of embed.fields) {
+			usedCharacters += field.name.length + String(field.value).length;
 		}
-		embed.fields.push({
-			name: 'Rulings',
-			value: rulingsText,
-			inline: false
-		});
+
+		if (data.rulings) {
+			var rulingsText = '';
+			for (var i = 0; i < data.rulings.length; ++i) {
+				//check if the next ruling still fits in the message and if not, make a [x more] link
+				//Note: I originally thought the character limit is 2000, but this is apparently incorrect. The number below (1200) was found through trial and error
+				var rulingLength = data.rulings[i].date.length + data.rulings[i].text.length + 6;
+				if (usedCharacters + rulingLength <= 1200) {
+					usedCharacters += rulingLength;
+					rulingsText += '**' + data.rulings[i].date + '** ' + data.rulings[i].text + '\n';
+				} else {
+					if (i === 0) {
+						rulingsText += '[' + data.rulings.length + ' rulings](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
+					} else {
+						rulingsText += '[' + (data.rulings.length - i) + ' more](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
+					}
+					break;
+				}
+			}
+			embed.fields.push({
+				name: 'Rulings',
+				value: rulingsText,
+				inline: false
+			});
+		}
 	}
 
 	return embed;
