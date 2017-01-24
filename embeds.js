@@ -19,7 +19,7 @@ function makeCardEmbed(data, extended) {
 	};
 
 	if (data.colors.length > 1) {
-		embed.color = 0xECD57a;
+		embed.color = 0xECD57A;
 	} else {
 		if (data.colors === 'W') {
 			embed.color = 0xFFFFDD;
