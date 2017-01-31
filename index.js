@@ -68,7 +68,7 @@ client.on('message', function (message) {
 			var flags = match.slice(1, match.indexOf('[', 1));
 			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
 			if (uniqueMatches.includes(match)) {
-				return;
+				continue;
 			}
 			uniqueMatches.push(match);
 
