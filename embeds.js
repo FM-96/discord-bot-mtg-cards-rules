@@ -139,5 +139,42 @@ function makeCardEmbed(data, extended) {
 }
 
 function makeRuleEmbed(data) {
-	//TODO
+	var embed = {
+		type: 'rich',
+		color: 0xAD42F4,
+		footer: {
+			text: client.user.username + ' | v' + (process.env.npm_package_version || require('./package.json').version),
+			icon_url: client.user.avatarURL
+		},
+		image: {
+			url: data.image
+		},
+		fields: []
+	};
+
+	embed.description = '';
+
+	if (data.type === 'glossary') {
+		var usedCharacters = 0;
+		embed.title = 'Glossary';
+		for (var item of data.content) {
+			if (usedCharacters + item.term.length + item.text.length + 7 <= 1200) {
+				usedCharacters += item.term.length + item.text.length + 7;
+				embed.description += '**' + item.term + '**\n' + item.text + '\n\n';
+			} else {
+				embed.description += '*(' + (data.content.length - data.content.indexOf(item)) + ' more matching entries, be more specific.)*';
+				break;
+			}
+		}
+	} else if (data.type === 'rule') {
+		embed.title = 'Comprehensive Rules';
+		for (var item of data.content) {
+			embed.description += '**' + item.number + '** ' + item.text + '\n\n';
+		}
+		if (data.subrules && data.subrules.count > 0) {
+			embed.description += '*(' + data.subrules.count + ' subrules: ' + data.subrules.start + ' - ' + data.subrules.end + ')*';
+		}
+	}
+
+	return embed;
 }

@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-mtg-cards-rules",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Looks up cards and rules from https://mtg.wtf/ and http://yawgatog.com/, respectively.",
   "main": "index.js",
   "scripts": {

@@ -60,11 +60,12 @@ client.on('message', function (message) {
 		return;
 	}
 
-	var matches = message.content.match(/\[(?:!?|\??)*\[[^\n]+?\]\]/g);
+	var cardMatches = message.content.match(/\[(?:!?|\??)*\[[^\n]+?\]\]/g);
+	var ruleMatches = message.content.match(/\{(?:<?|>?)*\{[^\n]+?\}\}/g);
 
-	if (matches) {
+	if (cardMatches) {
 		var uniqueMatches = [];
-		for (let match of matches) {
+		for (let match of cardMatches) {
 			var flags = match.slice(1, match.indexOf('[', 1));
 			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
 			if (uniqueMatches.includes(match)) {
@@ -72,33 +73,83 @@ client.on('message', function (message) {
 			}
 			uniqueMatches.push(match);
 
-			if (/^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
-				//match is a rule
-				var notImplementedNotified
-				if (!notImplementedNotified) {
-					notImplementedNotified = true;
-					message.channel.sendMessage('Sorry, I can\'t look up rules yet.');
+			var extended = flags.includes('?');
+			var picture = flags.includes('!');
+
+			//match is a card
+			fetcher.fetchCard(match).then(
+				function (result) {
+					if (result === false) {
+						return false;
+					}
+					return embeds.makeCardEmbed(result, extended);
 				}
-			} else {
-				//match is a card
-				var extended = flags.includes('?');
-				var picture = flags.includes('!');
-				fetcher.fetchCard(match).then(
+			).then(
+				function (embed) {
+					if (embed !== false) {
+						var options = {};
+						if (picture) {
+							options.file = embed.image.url;
+						}
+						delete embed.image;
+						return message.channel.sendEmbed(embed, '', options);
+					}
+				}
+			).catch(
+				function (error) {
+					winston.error(error);
+				}
+			);
+		}
+	}
+
+	if (ruleMatches) {
+		var uniqueMatches = [];
+		for (let match of ruleMatches) {
+			var flags = match.slice(1, match.indexOf('{', 1));
+			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
+			if (uniqueMatches.includes(match)) {
+				continue;
+			}
+			uniqueMatches.push(match);
+
+			var context = flags.includes('<');
+			var details = flags.includes('>');
+
+			if (/^[1-9]\.?$|^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
+				//match is a rule
+				match = match.replace(/\./g, '');
+				fetcher.fetchRule(match, context, details).then(
 					function (result) {
-						if (result === false) {
+						if (result.content.length === 0) {
 							return false;
 						}
-						return embeds.makeCardEmbed(result, extended);
+						return embeds.makeRuleEmbed(result);
 					}
 				).then(
 					function (embed) {
 						if (embed !== false) {
-							var options = {};
-							if (picture) {
-								options.file = embed.image.url;
-							}
-							delete embed.image;
-							return message.channel.sendEmbed(embed, '', options);
+							return message.channel.sendEmbed(embed);
+						}
+					}
+				).catch(
+					function (error) {
+						winston.error(error);
+					}
+				);
+			} else {
+				//match is a glossary term
+				fetcher.fetchGlossary(match).then(
+					function (result) {
+						if (result.content.length === 0) {
+							return false;
+						}
+						return embeds.makeRuleEmbed(result);
+					}
+				).then(
+					function (embed) {
+						if (embed !== false) {
+							return message.channel.sendEmbed(embed);
 						}
 					}
 				).catch(

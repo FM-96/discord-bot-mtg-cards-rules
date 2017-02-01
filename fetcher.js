@@ -1,10 +1,17 @@
 module.exports.fetchCard = fetchCard;
+module.exports.fetchGlossary = fetchGlossary;
 module.exports.fetchRule = fetchRule;
 
 var cheerio = require('cheerio');
 
 var http = require('http');
 var https = require('https');
+
+var comprehensiveRules = {
+	glossary: {},
+	rules: {},
+	updated: ''
+};
 
 function fetchCard(cardName) {
 	//get result from https://mtg.wtf/
@@ -100,8 +107,52 @@ function fetchCard(cardName) {
 	);
 }
 
-function fetchRule(rule) {
-	//TODO
+function fetchGlossary(term) {
+	return getComprehensiveRules().then(
+		function (result) {
+			glossaryObject = {
+				type: 'glossary',
+				content: []
+			};
+
+			if (comprehensiveRules.glossary[term]) {
+				glossaryObject.content.push(comprehensiveRules.glossary[term]);
+			}
+			for (var key in comprehensiveRules.glossary) {
+				if (key.includes(term) && key !== term) {
+					glossaryObject.content.push(comprehensiveRules.glossary[key]);
+				}
+			}
+
+			return glossaryObject;
+		}
+	);
+}
+
+function fetchRule(rule, context, details) {
+	return getComprehensiveRules().then(
+		function (result) {
+			ruleObject = {
+				type: 'rule',
+				content: []
+			};
+
+			if (comprehensiveRules.rules[rule]) {
+				ruleObject.content.push(comprehensiveRules.rules[rule]);
+				if (details) {
+					ruleObject.subrules = getSubRules(comprehensiveRules.rules[rule]);
+				}
+				if (context) {
+					var superRule = comprehensiveRules.rules[rule];
+					while (superRule = getSuperRule(superRule)) {
+						ruleObject.content.splice(0, 0, superRule);
+					}
+				}
+			}
+
+			return ruleObject;
+		}
+	);
 }
 
 function getCi(manacost, cardColors, oracleText) {
@@ -185,4 +236,185 @@ function getColors(manacost, colorIndicator, oracleText) {
 		colors = colors.slice(1);
 	}
 	return colors;
+}
+
+function getComprehensiveRules() {
+	return new Promise(function (resolve, reject) {
+		http.request({
+			hostname: 'magic.wizards.com',
+			path: '/en/game-info/gameplay/rules-and-formats/rules'
+		}, function (response) {
+			var responseData = '';
+
+			response.on('data', function (data) {
+				responseData += data;
+			});
+
+			response.on('end', function () {
+				resolve(responseData);
+			});
+		}).end();
+	}).then(
+		function (result) {
+			return new Promise(function (resolve, reject) { //I need to return a promise here because http.request is asynchronous
+				var $ = cheerio.load(result);
+				if (comprehensiveRules.updated !== $('#comprehensive-rules > p').first().text()) {
+					http.request({
+						hostname: 'media.wizards.com',
+						path: $('span.txt > a > span.txt').parent().attr('href').split('.com')[1]
+					}, function (response) {
+						var responseData = '';
+
+						response.on('data', function (data) {
+							responseData += data;
+						});
+
+						response.on('end', function () {
+							comprehensiveRules.updated = $('#comprehensive-rules > p').first().text();
+							resolve(parseComprehensiveRules(responseData));
+						});
+					}).end();
+				} else {
+					resolve(true);
+				}
+			});
+		}
+	);
+}
+
+function getSubRules(rule) {
+	//1. Game Concepts
+	if (rule.number.length === 2) {
+		var count = 0;
+		var start = false;
+		var end = false;
+		while (true) {
+			count++;
+			var nextRule = String(Number(rule.number[0])*100 + count);
+			if (comprehensiveRules.rules[nextRule]) {
+				if (!start) {
+					start = comprehensiveRules.rules[nextRule].number;
+				}
+				end = comprehensiveRules.rules[nextRule].number;
+			} else {
+				count--;
+				break;
+			}
+		}
+		return {
+			count: count,
+			start: start,
+			end: end
+		};
+	}
+	//100. General
+	if (rule.number.length === 4) {
+		var count = 0;
+		var start = false;
+		var end = false;
+		while (true) {
+			count++;
+			var nextRule = rule.number.slice(0, 3) + count;
+			if (comprehensiveRules.rules[nextRule]) {
+				if (!start) {
+					start = comprehensiveRules.rules[nextRule].number;
+				}
+				end = comprehensiveRules.rules[nextRule].number;
+			} else {
+				count--;
+				break;
+			}
+		}
+		return {
+			count: count,
+			start: start,
+			end: end
+		};
+	}
+	//100.1. These Magic rules apply to any Magic game with two or more players, including two-player games and multiplayer games.
+	if (rule.number.endsWith('.')) {
+		var count = 0;
+		var start = false;
+		var end = false;
+		var subletters = '.abcdefghijkmnpqrstuvwxyz';
+		while (true) {
+			count++;
+			var nextRule = rule.number.replace(/\./g, '') + subletters[count];
+			if (comprehensiveRules.rules[nextRule]) {
+				if (!start) {
+					start = comprehensiveRules.rules[nextRule].number;
+				}
+				end = comprehensiveRules.rules[nextRule].number;
+			} else {
+				count--;
+				break;
+			}
+		}
+		return {
+			count: count,
+			start: start,
+			end: end
+		};
+	}
+	//100.1a A two-player game is a game that begins with only two players.
+	return { count: 0 };
+}
+
+function getSuperRule(rule) {
+	//1. Game Concepts
+	if (rule.number.length === 2) {
+		return false;
+	}
+	//100. General
+	if (rule.number.length === 4) {
+		return comprehensiveRules.rules[rule.number[0]];
+	}
+	//100.1. These Magic rules apply to any Magic game with two or more players, including two-player games and multiplayer games.
+	if (rule.number.endsWith('.')) {
+		return comprehensiveRules.rules[rule.number.slice(0, 3)];
+	}
+	//100.1a A two-player game is a game that begins with only two players.
+	return comprehensiveRules.rules[rule.number.slice(0, -1).replace(/\./g, '')];
+}
+
+function parseComprehensiveRules(fullRulesText) {
+	return new Promise(function (resolve, reject) {
+		//Some symbols aren't downloaded properly and are displayed as �, so replace them with what they were supposed to be
+		//affected symbols are "smart" quotes (“ ” ’) as well as things like ™ symbols
+		//FIXME: This incorrectly converts some single quotes to double quotes, for example quotes inside quotes.
+		fullRulesText = fullRulesText.replace(/�(?=(?:d|ll|re|s|t|ve))/g, '\'').replace(/�(?=(?: block| booster| card reference| expansion| set))/g, '™').replace(/�/g, '"');
+		
+		var rulesStart = fullRulesText.indexOf('Credits') + 11; // 11 = 'Credits\r\n\r\n'
+		var rulesEnd = fullRulesText.indexOf('Glossary', rulesStart) - 4; // 4 = '\r\n\r\n'
+		var glossaryStart = rulesEnd + 16; // 16 = '\r\n\r\nGlossary\r\n\r\n'
+		var glossaryEnd = fullRulesText.indexOf('Credits', glossaryStart) - 6; // 6 = '\r\n\r\n\r\n'
+
+		//parse rules
+		var rules = {};
+		var rulesText = fullRulesText.slice(rulesStart, rulesEnd).replace(/\r\n\r\n\r\n/g, '\r\n\r\n').split('\r\n\r\n');
+		for (var item of rulesText) {
+			var number = item.slice(0, item.indexOf(' '));
+			var text = item.slice(item.indexOf(' ') + 1);
+			rules[number.toLowerCase().replace(/\./g, '')] = {
+				number: number,
+				text: text
+			};
+		}
+		comprehensiveRules.rules = rules;
+
+		//parse glossary
+		var glossary = {};
+		var glossaryText = fullRulesText.slice(glossaryStart, glossaryEnd).split('\r\n\r\n');
+		for (var item of glossaryText) {
+			var term = item.slice(0, item.indexOf('\r\n'));
+			var text = item.slice(item.indexOf('\r\n') + 2);
+			glossary[term.toLowerCase()] = {
+				term: term,
+				text: text
+			};
+		}
+		comprehensiveRules.glossary = glossary;
+
+		resolve(true);
+	});
 }
