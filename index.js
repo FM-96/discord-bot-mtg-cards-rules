@@ -29,7 +29,7 @@ var loggingLevels = require('./logging-levels.js');
 winston.padLevels = true;
 winston.setLevels(loggingLevels.levels);
 winston.addColors(loggingLevels.colors);
-winston.remove(winston.transports.Console)
+winston.remove(winston.transports.Console);
 winston.add(winston.transports.Console, {
 	level: loggingLevel,
 	colorize: colorize,
