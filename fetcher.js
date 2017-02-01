@@ -290,7 +290,7 @@ function getSubRules(rule) {
 		var end = false;
 		while (true) {
 			count++;
-			var nextRule = String(Number(rule.number[0])*100 + count);
+			var nextRule = String(Number(rule.number[0])*100 + (count - 1));
 			if (comprehensiveRules.rules[nextRule]) {
 				if (!start) {
 					start = comprehensiveRules.rules[nextRule].number;
