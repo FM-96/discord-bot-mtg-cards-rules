@@ -382,7 +382,13 @@ function parseComprehensiveRules(fullRulesText) {
 		//Some symbols aren't downloaded properly and are displayed as �, so replace them with what they were supposed to be
 		//affected symbols are "smart" quotes (“ ” ’) as well as things like ™ symbols
 		//FIXME: This incorrectly converts some single quotes to double quotes, for example quotes inside quotes.
-		fullRulesText = fullRulesText.replace(/�(?=(?:d|ll|re|s|t|ve))/g, '\'').replace(/�(?=(?: block| booster| card reference| expansion| set))/g, '™').replace(/�/g, '"');
+		fullRulesText = fullRulesText
+				.replace(/([^ ])�(?=d|ll|re|s|t|ve)/g, '$1\'') //most apostrophes
+				.replace(/([0-9a-z])�([0-9a-z])/g, '$1-$2') //"from-to" dash
+				.replace(/(triggered abilitie|card|Changing creature|object|opponent|owner|player|Wizard)s�(?= )/g, '$1s\'') //plural possessive apostrophes
+				.replace(/(two |exiled )cards'(?= )/g, '$1cards"') //correct wrong plural possessives for "cards"
+				.replace(/�(?= block| booster| card reference| expansion| set)/g, '™') //trademark symbol
+				.replace(/�/g, '"'); //everything else is quotes
 		
 		var rulesStart = fullRulesText.indexOf('Credits') + 11; // 11 = 'Credits\r\n\r\n'
 		var rulesEnd = fullRulesText.indexOf('Glossary', rulesStart) - 4; // 4 = '\r\n\r\n'

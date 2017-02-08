@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-mtg-cards-rules",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Looks up cards and rules for the game \"Magic: the Gathering\".",
   "main": "index.js",
   "scripts": {
