@@ -60,8 +60,8 @@ client.on('message', function (message) {
 		return;
 	}
 
-	var cardMatches = message.content.match(/\[(?:!?|\??)*\[[^\n]+?\]\]/g);
-	var ruleMatches = message.content.match(/\{(?:<?|>?)*\{[^\n]+?\}\}/g);
+	var cardMatches = message.content.match(/\[(?:!?|\??)*\[[^[\n]+?\]\]/g);
+	var ruleMatches = message.content.match(/\{(?:<?|>?)*\{[^{\n]+?\}\}/g);
 
 	if (cardMatches) {
 		var uniqueMatches = [];
