@@ -5,7 +5,7 @@ module.exports = {
 		warn: 2,
 		info: 3,
 		verbose: 4,
-		debug: 5
+		debug: 5,
 	},
 	colors: {
 		fatal: 'red',
@@ -13,6 +13,6 @@ module.exports = {
 		warn: 'yellow',
 		info: 'white',
 		verbose: 'white',
-		debug: 'cyan'
-	}
+		debug: 'cyan',
+	},
 };

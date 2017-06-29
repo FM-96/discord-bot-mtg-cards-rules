@@ -3,19 +3,21 @@ module.exports.makeRuleEmbed = makeRuleEmbed;
 
 var client = require('./client.js');
 
+var botVersion = process.env.npm_package_version ? process.env.npm_package_version : require('./package.json').version;
+
 function makeCardEmbed(data, extended) {
 	var embed = {
 		title: data.title,
 		type: 'rich',
 		url: 'https://mtg.wtf/card?q=!' + encodeURIComponent(data.title),
 		footer: {
-			text: client.user.username + ' | v' + (process.env.npm_package_version || require('./package.json').version),
-			icon_url: client.user.avatarURL
+			text: client.user.username + ' | v' + botVersion,
+			icon_url: client.user.avatarURL,
 		},
 		image: {
-			url: data.image
+			url: data.image,
 		},
-		fields: []
+		fields: [],
 	};
 
 	if (data.colors.length > 1) {
@@ -37,19 +39,19 @@ function makeCardEmbed(data, extended) {
 	embed.fields.push({
 		name: 'Mana Cost',
 		value: data.cost,
-		inline: true
+		inline: true,
 	});
 
 	embed.fields.push({
 		name: 'CMC',
 		value: String(data.cmc),
-		inline: true
+		inline: true,
 	});
 
 	embed.fields.push({
 		name: 'Color(s) / Color Identity',
 		value: data.colors + ' / ' + data.ci,
-		inline: true
+		inline: true,
 	});
 
 	var mainText = '';
@@ -80,14 +82,14 @@ function makeCardEmbed(data, extended) {
 	embed.fields.push({
 		name: data.types,
 		value: mainText,
-		inline: false
+		inline: false,
 	});
 
 	if (extended) {
 		embed.fields.push({
 			name: 'Legalities',
 			value: data.legalities,
-			inline: true
+			inline: true,
 		});
 	}
 
@@ -99,7 +101,7 @@ function makeCardEmbed(data, extended) {
 		embed.fields.push({
 			name: data.otherparts.length === 1 ? 'Other Part' : 'Other Parts',
 			value: parts,
-			inline: true
+			inline: true,
 		});
 	}
 
@@ -112,8 +114,8 @@ function makeCardEmbed(data, extended) {
 		if (data.rulings) {
 			var rulingsText = '';
 			for (var i = 0; i < data.rulings.length; ++i) {
-				//check if the next ruling still fits in the message and if not, make a [x more] link
-				//Note: I originally thought the character limit is 2000, but this is apparently incorrect. The number below (1200) was found through trial and error
+				// check if the next ruling still fits in the message and if not, make a [x more] link
+				// Note: I originally thought the character limit is 2000, but this is apparently incorrect. The number below (1200) was found through trial and error
 				var rulingLength = data.rulings[i].date.length + data.rulings[i].text.length + 6;
 				if (usedCharacters + rulingLength <= 1200) {
 					usedCharacters += rulingLength;
@@ -130,7 +132,7 @@ function makeCardEmbed(data, extended) {
 			embed.fields.push({
 				name: 'Rulings',
 				value: rulingsText,
-				inline: false
+				inline: false,
 			});
 		}
 	}
@@ -143,13 +145,13 @@ function makeRuleEmbed(data) {
 		type: 'rich',
 		color: 0xAD42F4,
 		footer: {
-			text: client.user.username + ' | v' + (process.env.npm_package_version || require('./package.json').version),
-			icon_url: client.user.avatarURL
+			text: client.user.username + ' | v' + botVersion,
+			icon_url: client.user.avatarURL,
 		},
 		image: {
-			url: data.image
+			url: data.image,
 		},
-		fields: []
+		fields: [],
 	};
 
 	embed.description = '';
@@ -157,7 +159,7 @@ function makeRuleEmbed(data) {
 	if (data.type === 'glossary') {
 		var usedCharacters = 0;
 		embed.title = 'Glossary';
-		for (var item of data.content) {
+		for (let item of data.content) {
 			if (usedCharacters + item.term.length + item.text.length + 7 <= 1200) {
 				usedCharacters += item.term.length + item.text.length + 7;
 				embed.description += '**' + item.term + '**\n' + item.text + '\n\n';
@@ -168,7 +170,7 @@ function makeRuleEmbed(data) {
 		}
 	} else if (data.type === 'rule') {
 		embed.title = 'Comprehensive Rules';
-		for (var item of data.content) {
+		for (let item of data.content) {
 			embed.description += '**' + item.number + '** ' + item.text + '\n\n';
 		}
 		if (data.subrules && data.subrules.count > 0) {

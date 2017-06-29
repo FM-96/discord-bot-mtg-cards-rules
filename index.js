@@ -1,8 +1,8 @@
-var Discord = require('discord.js');
 var argv = require('minimist')(process.argv.slice(2));
 var winston = require('winston');
 
 var fs = require('fs');
+var path = require('path');
 
 var embeds = require('./embeds.js');
 var fetcher = require('./fetcher.js');
@@ -10,22 +10,22 @@ var fetcher = require('./fetcher.js');
 var botToken = null;
 var client = require('./client.js');
 
-//set logging level
+// set logging level
 var loggingLevel = 'info';
-if (argv.logging !== undefined && Object.keys(require('./logging-levels.js').levels).includes(argv.logging)) {
+var loggingLevels = require('./logging-levels.js');
+if (argv.logging !== undefined && Object.keys(loggingLevels.levels).includes(argv.logging)) {
 	loggingLevel = argv.logging;
 } else if (argv.verbose === true || argv.v === true) {
 	loggingLevel = 'verbose';
 }
 
-//set console colors
+// set console colors
 var colorize = true;
 if (argv.nocolor === true) {
 	colorize = false;
 }
 
-//configure logger
-var loggingLevels = require('./logging-levels.js');
+// configure logger
 winston.padLevels = true;
 winston.setLevels(loggingLevels.levels);
 winston.addColors(loggingLevels.colors);
@@ -36,17 +36,18 @@ winston.add(winston.transports.Console, {
 	timestamp: true,
 	stderrLevels: [
 		'fatal',
-		'error'
-	]
+		'error',
+	],
 });
 
-//get discord bot token
-if (!fileExists(__dirname + '/discord_bot_token.txt')) {
-	//create file
-	fs.closeSync(fs.openSync(__dirname + '/discord_bot_token.txt', 'w'));
+// get discord bot token
+var tokenFile = path.join(__dirname, 'discord_bot_token.txt');
+if (!fileExists(tokenFile)) {
+	// create file
+	fs.closeSync(fs.openSync(tokenFile, 'w'));
 }
-//read token from file
-botToken = fs.readFileSync(__dirname + '/discord_bot_token.txt', 'utf8');
+// read token from file
+botToken = fs.readFileSync(tokenFile, 'utf8');
 if (!botToken) {
 	winston.fatal('No bot token found');
 	winston.fatal('Save the token in discord_bot_token.txt and restart the application');
@@ -64,19 +65,19 @@ client.on('message', function (message) {
 	var ruleMatches = message.content.match(/\{(?:<?|>?)*\{[^{\n]+?\}\}/g);
 
 	if (cardMatches) {
-		var uniqueMatches = [];
+		let uniqueMatches = [];
 		for (let match of cardMatches) {
-			var flags = match.slice(1, match.indexOf('[', 1));
+			let flags = match.slice(1, match.indexOf('[', 1));
 			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
 			if (uniqueMatches.includes(match)) {
 				continue;
 			}
 			uniqueMatches.push(match);
 
-			var extended = flags.includes('?');
-			var picture = flags.includes('!');
+			let extended = flags.includes('?');
+			let picture = flags.includes('!');
 
-			//match is a card
+			// match is a card
 			fetcher.fetchCard(match).then(
 				function (result) {
 					if (result === false) {
@@ -87,7 +88,7 @@ client.on('message', function (message) {
 			).then(
 				function (embed) {
 					if (embed !== false) {
-						var options = {};
+						let options = {};
 						if (picture) {
 							options.file = embed.image.url;
 						}
@@ -104,20 +105,20 @@ client.on('message', function (message) {
 	}
 
 	if (ruleMatches) {
-		var uniqueMatches = [];
+		let uniqueMatches = [];
 		for (let match of ruleMatches) {
-			var flags = match.slice(1, match.indexOf('{', 1));
+			let flags = match.slice(1, match.indexOf('{', 1));
 			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
 			if (uniqueMatches.includes(match)) {
 				continue;
 			}
 			uniqueMatches.push(match);
 
-			var context = flags.includes('<');
-			var details = flags.includes('>');
+			let context = flags.includes('<');
+			let details = flags.includes('>');
 
 			if (/^[1-9]\.?$|^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
-				//match is a rule
+				// match is a rule
 				match = match.replace(/\./g, '');
 				fetcher.fetchRule(match, context, details).then(
 					function (result) {
@@ -138,7 +139,7 @@ client.on('message', function (message) {
 					}
 				);
 			} else {
-				//match is a glossary term
+				// match is a glossary term
 				fetcher.fetchGlossary(match).then(
 					function (result) {
 						if (result.content.length === 0) {
@@ -174,7 +175,7 @@ client.on('warn', function (warning) {
 	winston.warn('Discord Warning: ' + warning);
 });
 
-//start bot
+// start bot
 client.login(botToken).then(
 	function (result) {
 		winston.info('Successfully logged in');
@@ -188,10 +189,10 @@ client.login(botToken).then(
 	}
 );
 
-//utility functions
-function fileExists(path) {
+// utility functions
+function fileExists(filePath) {
 	try {
-		fs.statSync(path);
+		fs.statSync(filePath);
 		return true;
 	} catch (e) {
 		return false;
