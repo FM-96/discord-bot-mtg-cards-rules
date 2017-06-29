@@ -93,7 +93,8 @@ client.on('message', function (message) {
 							options.file = embed.image.url;
 						}
 						delete embed.image;
-						return message.channel.sendEmbed(embed, '', options);
+						options.embed = embed;
+						return message.channel.send('', options);
 					}
 				}
 			).catch(
@@ -130,7 +131,7 @@ client.on('message', function (message) {
 				).then(
 					function (embed) {
 						if (embed !== false) {
-							return message.channel.sendEmbed(embed);
+							return message.channel.send('', {embed: embed});
 						}
 					}
 				).catch(
@@ -150,7 +151,7 @@ client.on('message', function (message) {
 				).then(
 					function (embed) {
 						if (embed !== false) {
-							return message.channel.sendEmbed(embed);
+							return message.channel.send('', {embed: embed});
 						}
 					}
 				).catch(
