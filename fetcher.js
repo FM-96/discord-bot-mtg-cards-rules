@@ -4,7 +4,6 @@ module.exports.fetchRule = fetchRule;
 
 var cheerio = require('cheerio');
 
-var http = require('http');
 var https = require('https');
 
 var comprehensiveRules = {
@@ -240,7 +239,7 @@ function getColors(manacost, colorIndicator, oracleText) {
 
 function getComprehensiveRules() {
 	return new Promise(function (resolve, reject) {
-		http.request({
+		https.request({
 			hostname: 'magic.wizards.com',
 			path: '/en/game-info/gameplay/rules-and-formats/rules',
 		}, function (response) {
@@ -258,10 +257,12 @@ function getComprehensiveRules() {
 		function (result) {
 			return new Promise(function (resolve, reject) { // I need to return a promise here because http.request is asynchronous
 				var $ = cheerio.load(result);
-				if (comprehensiveRules.updated !== $('#comprehensive-rules > p').first().text()) {
-					http.request({
+				var rulesPath = $('a.cta[href$=".txt"]').attr('href').split('.com')[1];
+				var rulesDate = /%20(.+?)\.txt$/.exec(rulesPath)[1];
+				if (comprehensiveRules.updated !== rulesDate) {
+					https.request({
 						hostname: 'media.wizards.com',
-						path: $('span.txt > a > span.txt').parent().attr('href').split('.com')[1],
+						path: rulesPath,
 					}, function (response) {
 						var responseData = '';
 
@@ -270,7 +271,7 @@ function getComprehensiveRules() {
 						});
 
 						response.on('end', function () {
-							comprehensiveRules.updated = $('#comprehensive-rules > p').first().text();
+							comprehensiveRules.updated = rulesDate;
 							resolve(parseComprehensiveRules(responseData));
 						});
 					}).end();
