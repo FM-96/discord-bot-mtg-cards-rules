@@ -3,8 +3,10 @@ module.exports.fetchGlossary = fetchGlossary;
 module.exports.fetchRule = fetchRule;
 
 var cheerio = require('cheerio');
+var windows1252 = require('windows-1252');
 
 var https = require('https');
+var Transform = require('stream').Transform;
 
 var comprehensiveRules = {
 	glossary: {},
@@ -264,15 +266,15 @@ function getComprehensiveRules() {
 						hostname: 'media.wizards.com',
 						path: rulesPath,
 					}, function (response) {
-						var responseData = '';
+						var responseData = new Transform();
 
 						response.on('data', function (data) {
-							responseData += data;
+							responseData.push(data);
 						});
 
 						response.on('end', function () {
 							comprehensiveRules.updated = rulesDate;
-							resolve(parseComprehensiveRules(responseData));
+							resolve(parseComprehensiveRules(windows1252.decode(responseData.read().toString('binary'))));
 						});
 					}).end();
 				} else {
@@ -380,25 +382,14 @@ function getSuperRule(rule) {
 
 function parseComprehensiveRules(fullRulesText) {
 	return new Promise(function (resolve, reject) {
-		// Some symbols aren't downloaded properly and are displayed as �, so replace them with what they were supposed to be
-		// affected symbols are "smart" quotes (“ ” ’) as well as things like ™ symbols
-		// FIXME: This incorrectly converts some single quotes to double quotes, for example quotes inside quotes.
-		var fixedRulesText = fullRulesText
-			.replace(/([^ ])�(?=d|ll|re|s|t|ve)/g, '$1\'') // most apostrophes
-			.replace(/([0-9a-z])�([0-9a-z])/g, '$1-$2') // "from-to" dash
-			.replace(/(triggered abilitie|card|Changing creature|object|opponent|owner|player|Wizard)s�(?= )/g, '$1s\'') // plural possessive apostrophes
-			.replace(/(two |exiled )cards'(?= )/g, '$1cards"') // correct wrong plural possessives for "cards"
-			.replace(/�(?= block| booster| card reference| expansion| set)/g, '™') // trademark symbol
-			.replace(/�/g, '"'); // everything else is quotes
-
-		var rulesStart = fixedRulesText.indexOf('Credits') + 11; // 11 = 'Credits\r\n\r\n'
-		var rulesEnd = fixedRulesText.indexOf('Glossary', rulesStart) - 4; // 4 = '\r\n\r\n'
+		var rulesStart = fullRulesText.indexOf('Credits') + 11; // 11 = 'Credits\r\n\r\n'
+		var rulesEnd = fullRulesText.indexOf('Glossary', rulesStart) - 4; // 4 = '\r\n\r\n'
 		var glossaryStart = rulesEnd + 16; // 16 = '\r\n\r\nGlossary\r\n\r\n'
-		var glossaryEnd = fixedRulesText.indexOf('Credits', glossaryStart) - 6; // 6 = '\r\n\r\n\r\n'
+		var glossaryEnd = fullRulesText.indexOf('Credits', glossaryStart) - 6; // 6 = '\r\n\r\n\r\n'
 
 		// parse rules
 		var rules = {};
-		var rulesText = fixedRulesText.slice(rulesStart, rulesEnd).replace(/\r\n\r\n\r\n/g, '\r\n\r\n').split('\r\n\r\n');
+		var rulesText = fullRulesText.slice(rulesStart, rulesEnd).replace(/\r\n\r\n\r\n/g, '\r\n\r\n').split('\r\n\r\n');
 		for (let item of rulesText) {
 			let number = item.slice(0, item.indexOf(' '));
 			let text = item.slice(item.indexOf(' ') + 1);
@@ -411,7 +402,7 @@ function parseComprehensiveRules(fullRulesText) {
 
 		// parse glossary
 		var glossary = {};
-		var glossaryText = fixedRulesText.slice(glossaryStart, glossaryEnd).split('\r\n\r\n');
+		var glossaryText = fullRulesText.slice(glossaryStart, glossaryEnd).split('\r\n\r\n');
 		for (let item of glossaryText) {
 			let term = item.slice(0, item.indexOf('\r\n'));
 			let text = item.slice(item.indexOf('\r\n') + 2);
