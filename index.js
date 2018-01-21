@@ -56,7 +56,7 @@ if (!botToken) {
 	winston.verbose('Bot token loaded');
 }
 
-client.on('message', function (message) {
+client.on('message', async function (message) {
 	if (message.author.id === client.user.id) {
 		return;
 	}
@@ -78,30 +78,24 @@ client.on('message', function (message) {
 			let picture = flags.includes('!');
 
 			// match is a card
-			fetcher.fetchCard(match).then(
-				function (result) {
-					if (result === false) {
-						return false;
-					}
-					return embeds.makeCardEmbed(result, extended);
+			try {
+				const cardData = await fetcher.fetchCard(match);
+				if (cardData === false) {
+					continue;
 				}
-			).then(
-				function (embed) {
-					if (embed !== false) {
-						let options = {};
-						if (picture) {
-							options.file = embed.image.url;
-						}
-						delete embed.image;
-						options.embed = embed;
-						return message.channel.send('', options);
-					}
+
+				const embed = await embeds.makeCardEmbed(cardData, extended);
+				const options = {};
+				if (picture) {
+					options.file = embed.image.url;
 				}
-			).catch(
-				function (error) {
-					winston.error(error);
-				}
-			);
+				delete embed.image;
+				options.embed = embed;
+
+				await message.channel.send('', options);
+			} catch (error) {
+				winston.error(error);
+			}
 		}
 	}
 
@@ -121,44 +115,32 @@ client.on('message', function (message) {
 			if (/^[1-9]\.?$|^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
 				// match is a rule
 				match = match.replace(/\./g, '');
-				fetcher.fetchRule(match, context, details).then(
-					function (result) {
-						if (result.content.length === 0) {
-							return false;
-						}
-						return embeds.makeRuleEmbed(result);
+				try {
+					const ruleData = await fetcher.fetchRule(match, context, details);
+					if (ruleData.content.length === 0) {
+						continue;
 					}
-				).then(
-					function (embed) {
-						if (embed !== false) {
-							return message.channel.send('', {embed: embed});
-						}
-					}
-				).catch(
-					function (error) {
-						winston.error(error);
-					}
-				);
+
+					const embed = await embeds.makeRuleEmbed(ruleData);
+
+					await message.channel.send('', {embed: embed});
+				} catch (error) {
+					winston.error(error);
+				}
 			} else {
 				// match is a glossary term
-				fetcher.fetchGlossary(match).then(
-					function (result) {
-						if (result.content.length === 0) {
-							return false;
-						}
-						return embeds.makeRuleEmbed(result);
+				try {
+					const glossaryData = await fetcher.fetchGlossary(match);
+					if (glossaryData.content.length === 0) {
+						continue;
 					}
-				).then(
-					function (embed) {
-						if (embed !== false) {
-							return message.channel.send('', {embed: embed});
-						}
-					}
-				).catch(
-					function (error) {
-						winston.error(error);
-					}
-				);
+
+					const embed = await embeds.makeRuleEmbed(glossaryData);
+
+					await message.channel.send('', {embed: embed});
+				} catch (error) {
+					winston.error(error);
+				}
 			}
 		}
 	}
