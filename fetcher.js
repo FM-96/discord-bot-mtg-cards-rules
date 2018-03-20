@@ -2,13 +2,13 @@ module.exports.fetchCard = fetchCard;
 module.exports.fetchGlossary = fetchGlossary;
 module.exports.fetchRule = fetchRule;
 
-var cheerio = require('cheerio');
-var windows1252 = require('windows-1252');
+const cheerio = require('cheerio');
+const windows1252 = require('windows-1252');
 
-var https = require('https');
-var Transform = require('stream').Transform;
+const https = require('https');
+const Transform = require('stream').Transform;
 
-var comprehensiveRules = {
+const comprehensiveRules = {
 	glossary: {},
 	rules: {},
 	updated: '',
@@ -21,7 +21,7 @@ function fetchCard(cardName) {
 			hostname: 'mtg.wtf',
 			path: '/card?q=!' + encodeURIComponent(cardName),
 		}, function (response) {
-			var responseData = '';
+			let responseData = '';
 
 			response.on('data', function (data) {
 				responseData += data;
@@ -34,8 +34,8 @@ function fetchCard(cardName) {
 	}).then(
 		// parse result into object
 		function (result) {
-			var $ = cheerio.load(result);
-			var cardObject = {};
+			const $ = cheerio.load(result);
+			const cardObject = {};
 
 			if ($('.results_summary').text().trim() === 'No cards found') {
 				return false;
@@ -48,7 +48,7 @@ function fetchCard(cardName) {
 			}
 			cardObject.cmc = getCmc(cardObject.cost);
 			cardObject.types = $('.typeline').text().trim();
-			var colorIndicator = null;
+			let colorIndicator = null;
 			if ($('.oracle').length) {
 				if ($('.oracle > .color_indicator').length) {
 					colorIndicator = $('.oracle > .color_indicator').text();
@@ -66,12 +66,12 @@ function fetchCard(cardName) {
 			if (cardObject.types.includes('Creature') || cardObject.types.includes('Vehicle')) {
 				cardObject.pt = $('.power_toughness').text().trim();
 			} else if (cardObject.types.includes('Planeswalker')) {
-				var loyalty = $.text().match(/Loyalty:\s+([0-9]+)/);
+				const loyalty = $.text().match(/Loyalty:\s+([0-9]+)/);
 				if (loyalty) {
 					cardObject.loyalty = loyalty[1];
 				}
 			}
-			var $otherparts;
+			let $otherparts;
 			$('.infolabel').each(function (i, elem) {
 				if ($(this).text().includes('Card has other part')) {
 					$otherparts = $(this);
@@ -93,7 +93,7 @@ function fetchCard(cardName) {
 			if ($('.rulings').length) {
 				cardObject.rulings = [];
 				$('.rulings > li').each(function (i, elem) {
-					var ruling = {
+					const ruling = {
 						date: $(this).text().trim().slice(0, 10),
 						text: $(this).text().trim().slice(11), // additional whitespace after date and before ruling text
 					};
@@ -111,7 +111,7 @@ function fetchCard(cardName) {
 function fetchGlossary(term) {
 	return getComprehensiveRules().then(
 		function (result) {
-			var glossaryObject = {
+			const glossaryObject = {
 				type: 'glossary',
 				content: [],
 			};
@@ -119,7 +119,7 @@ function fetchGlossary(term) {
 			if (comprehensiveRules.glossary[term]) {
 				glossaryObject.content.push(comprehensiveRules.glossary[term]);
 			}
-			for (var key in comprehensiveRules.glossary) {
+			for (const key in comprehensiveRules.glossary) {
 				if (key.includes(term) && key !== term) {
 					glossaryObject.content.push(comprehensiveRules.glossary[key]);
 				}
@@ -133,7 +133,7 @@ function fetchGlossary(term) {
 function fetchRule(rule, context, details) {
 	return getComprehensiveRules().then(
 		function (result) {
-			var ruleObject = {
+			const ruleObject = {
 				type: 'rule',
 				content: [],
 			};
@@ -144,7 +144,7 @@ function fetchRule(rule, context, details) {
 					ruleObject.subrules = getSubRules(comprehensiveRules.rules[rule]);
 				}
 				if (context) {
-					var superRule = comprehensiveRules.rules[rule];
+					let superRule = comprehensiveRules.rules[rule];
 					while ((superRule = getSuperRule(superRule))) {
 						ruleObject.content.splice(0, 0, superRule);
 					}
@@ -157,7 +157,7 @@ function fetchRule(rule, context, details) {
 }
 
 function getCi(manacost, cardColors, oracleText) {
-	var ci = 'C';
+	let ci = 'C';
 	if (manacost.includes('W') || cardColors.includes('W') || (oracleText && oracleText.match(/\{W\}/))) {
 		ci += 'W';
 	}
@@ -180,31 +180,31 @@ function getCi(manacost, cardColors, oracleText) {
 }
 
 function getCmc(manacost) {
-	var cmc = 0;
-	var coloredCosts = manacost.match(/\{[WUBRGC]\}/g);
+	let cmc = 0;
+	const coloredCosts = manacost.match(/\{[WUBRGC]\}/g);
 	if (coloredCosts) {
 		cmc += coloredCosts.length;
 	}
-	var phyrexianCosts = manacost.match(/\{[WUBRGC]\/P\}/g);
+	const phyrexianCosts = manacost.match(/\{[WUBRGC]\/P\}/g);
 	if (phyrexianCosts) {
 		cmc += phyrexianCosts.length;
 	}
-	var hybridCosts = manacost.match(/\{[WUBRGC]\/[WUBRGC]\}/g);
+	const hybridCosts = manacost.match(/\{[WUBRGC]\/[WUBRGC]\}/g);
 	if (hybridCosts) {
 		cmc += hybridCosts.length;
 	}
-	var monocoloredHybridCosts = manacost.match(/\{[0-9]+\/[WUBRGC]\}/g);
+	const monocoloredHybridCosts = manacost.match(/\{[0-9]+\/[WUBRGC]\}/g);
 	if (monocoloredHybridCosts) {
-		for (var cost of monocoloredHybridCosts) {
+		for (const cost of monocoloredHybridCosts) {
 			cmc += Number(cost.split('/')[0].slice(1));
 		}
 	}
 	// halfmana from unsets
-	var halfManaCosts = manacost.match(/\{H[WUBRGC]\}/g);
+	const halfManaCosts = manacost.match(/\{H[WUBRGC]\}/g);
 	if (halfManaCosts) {
 		cmc += halfManaCosts.length / 2;
 	}
-	var genericCosts = manacost.match(/\{([0-9]+)\}/);
+	const genericCosts = manacost.match(/\{([0-9]+)\}/);
 	if (genericCosts) {
 		cmc += Number(genericCosts[1]);
 	}
@@ -212,7 +212,7 @@ function getCmc(manacost) {
 }
 
 function getColors(manacost, colorIndicator, oracleText) {
-	var colors = 'C';
+	let colors = 'C';
 
 	if (oracleText && (oracleText.match(/(^|\n|, )[Dd]evoid[,\n]/) || oracleText.includes(' is colorless'))) {
 		return 'C';
@@ -245,7 +245,7 @@ function getComprehensiveRules() {
 			hostname: 'magic.wizards.com',
 			path: '/en/game-info/gameplay/rules-and-formats/rules',
 		}, function (response) {
-			var responseData = '';
+			let responseData = '';
 
 			response.on('data', function (data) {
 				responseData += data;
@@ -258,15 +258,15 @@ function getComprehensiveRules() {
 	}).then(
 		function (result) {
 			return new Promise(function (resolve, reject) { // I need to return a promise here because http.request is asynchronous
-				var $ = cheerio.load(result);
-				var rulesPath = $('a.cta[href$=".txt"]').attr('href').split('.com')[1];
-				var rulesDate = /%20(.+?)\.txt$/.exec(rulesPath)[1];
+				const $ = cheerio.load(result);
+				const rulesPath = $('a.cta[href$=".txt"]').attr('href').split('.com')[1];
+				const rulesDate = /%20(.+?)\.txt$/.exec(rulesPath)[1];
 				if (comprehensiveRules.updated !== rulesDate) {
 					https.request({
 						hostname: 'media.wizards.com',
 						path: rulesPath,
 					}, function (response) {
-						var responseData = new Transform();
+						const responseData = new Transform();
 
 						response.on('data', function (data) {
 							responseData.push(data);
@@ -293,7 +293,7 @@ function getSubRules(rule) {
 		let end = false;
 		for (;;) {
 			count++;
-			let nextRule = String((Number(rule.number[0]) * 100) + (count - 1));
+			const nextRule = String((Number(rule.number[0]) * 100) + (count - 1));
 			if (comprehensiveRules.rules[nextRule]) {
 				if (!start) {
 					start = comprehensiveRules.rules[nextRule].number;
@@ -317,7 +317,7 @@ function getSubRules(rule) {
 		let end = false;
 		for (;;) {
 			count++;
-			let nextRule = rule.number.slice(0, 3) + count;
+			const nextRule = rule.number.slice(0, 3) + count;
 			if (comprehensiveRules.rules[nextRule]) {
 				if (!start) {
 					start = comprehensiveRules.rules[nextRule].number;
@@ -339,10 +339,10 @@ function getSubRules(rule) {
 		let count = 0;
 		let start = false;
 		let end = false;
-		let subletters = '.abcdefghijkmnpqrstuvwxyz';
+		const subletters = '.abcdefghijkmnpqrstuvwxyz';
 		for (;;) {
 			count++;
-			let nextRule = rule.number.replace(/\./g, '') + subletters[count];
+			const nextRule = rule.number.replace(/\./g, '') + subletters[count];
 			if (comprehensiveRules.rules[nextRule]) {
 				if (!start) {
 					start = comprehensiveRules.rules[nextRule].number;
@@ -382,18 +382,18 @@ function getSuperRule(rule) {
 
 function parseComprehensiveRules(fullRulesText) {
 	return new Promise(function (resolve, reject) {
-		var unixLeRulesText = fullRulesText.replace(/\r\n/g, '\n');
-		var rulesStart = unixLeRulesText.indexOf('Credits') + 9; // 9 = 'Credits\n\n'
-		var rulesEnd = unixLeRulesText.indexOf('Glossary', rulesStart) - 2; // 2 = '\n\n'
-		var glossaryStart = rulesEnd + 12; // 12 = '\n\nGlossary\n\n'
-		var glossaryEnd = unixLeRulesText.indexOf('Credits', glossaryStart) - 3; // 3 = '\n\n\n'
+		const unixLeRulesText = fullRulesText.replace(/\r\n/g, '\n');
+		const rulesStart = unixLeRulesText.indexOf('Credits') + 9; // 9 = 'Credits\n\n'
+		const rulesEnd = unixLeRulesText.indexOf('Glossary', rulesStart) - 2; // 2 = '\n\n'
+		const glossaryStart = rulesEnd + 12; // 12 = '\n\nGlossary\n\n'
+		const glossaryEnd = unixLeRulesText.indexOf('Credits', glossaryStart) - 3; // 3 = '\n\n\n'
 
 		// parse rules
-		var rules = {};
-		var rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n\n\n/g, '\n\n').replace(/\nExample: /g, '\n__Example:__ ').split('\n\n');
-		for (let item of rulesText) {
-			let number = item.slice(0, item.indexOf(' '));
-			let text = item.slice(item.indexOf(' ') + 1);
+		const rules = {};
+		const rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n\n\n/g, '\n\n').replace(/\nExample: /g, '\n__Example:__ ').split('\n\n');
+		for (const item of rulesText) {
+			const number = item.slice(0, item.indexOf(' '));
+			const text = item.slice(item.indexOf(' ') + 1);
 			rules[number.toLowerCase().replace(/\./g, '')] = {
 				number: number,
 				text: text,
@@ -402,11 +402,11 @@ function parseComprehensiveRules(fullRulesText) {
 		comprehensiveRules.rules = rules;
 
 		// parse glossary
-		var glossary = {};
-		var glossaryText = unixLeRulesText.slice(glossaryStart, glossaryEnd).split('\n\n');
-		for (let item of glossaryText) {
-			let term = item.slice(0, item.indexOf('\n'));
-			let text = item.slice(item.indexOf('\n') + 1);
+		const glossary = {};
+		const glossaryText = unixLeRulesText.slice(glossaryStart, glossaryEnd).split('\n\n');
+		for (const item of glossaryText) {
+			const term = item.slice(0, item.indexOf('\n'));
+			const text = item.slice(item.indexOf('\n') + 1);
 			glossary[term.toLowerCase()] = {
 				term: term,
 				text: text,

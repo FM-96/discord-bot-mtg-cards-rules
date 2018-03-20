@@ -1,18 +1,18 @@
-var argv = require('minimist')(process.argv.slice(2));
-var winston = require('winston');
+const argv = require('minimist')(process.argv.slice(2));
+const winston = require('winston');
 
-var fs = require('fs');
-var path = require('path');
+const fs = require('fs');
+const path = require('path');
 
-var embeds = require('./embeds.js');
-var fetcher = require('./fetcher.js');
+const embeds = require('./embeds.js');
+const fetcher = require('./fetcher.js');
 
-var botToken = null;
-var client = require('./client.js');
+let botToken = null;
+const client = require('./client.js');
 
 // set logging level
-var loggingLevel = 'info';
-var loggingLevels = require('./logging-levels.js');
+let loggingLevel = 'info';
+const loggingLevels = require('./logging-levels.js');
 if (argv.logging !== undefined && Object.keys(loggingLevels.levels).includes(argv.logging)) {
 	loggingLevel = argv.logging;
 } else if (argv.verbose === true || argv.v === true) {
@@ -20,7 +20,7 @@ if (argv.logging !== undefined && Object.keys(loggingLevels.levels).includes(arg
 }
 
 // set console colors
-var colorize = true;
+let colorize = true;
 if (argv.nocolor === true) {
 	colorize = false;
 }
@@ -41,7 +41,7 @@ winston.add(winston.transports.Console, {
 });
 
 // get discord bot token
-var tokenFile = path.join(__dirname, 'discord_bot_token.txt');
+const tokenFile = path.join(__dirname, 'discord_bot_token.txt');
 if (!fileExists(tokenFile)) {
 	// create file
 	fs.closeSync(fs.openSync(tokenFile, 'w'));
@@ -61,21 +61,21 @@ client.on('message', async function (message) {
 		return;
 	}
 
-	var cardMatches = message.content.match(/\[(?:!?|\??)*\[[^[\n]+?\]\]/g);
-	var ruleMatches = message.content.match(/\{(?:<?|>?)*\{[^{\n]+?\}\}/g);
+	const cardMatches = message.content.match(/\[(?:!?|\??)*\[[^[\n]+?\]\]/g);
+	const ruleMatches = message.content.match(/\{(?:<?|>?)*\{[^{\n]+?\}\}/g);
 
 	if (cardMatches) {
-		let uniqueMatches = [];
+		const uniqueMatches = [];
 		for (let match of cardMatches) {
-			let flags = match.slice(1, match.indexOf('[', 1));
+			const flags = match.slice(1, match.indexOf('[', 1));
 			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
 			if (uniqueMatches.includes(match)) {
 				continue;
 			}
 			uniqueMatches.push(match);
 
-			let extended = flags.includes('?');
-			let picture = flags.includes('!');
+			const extended = flags.includes('?');
+			const picture = flags.includes('!');
 
 			// match is a card
 			try {
@@ -108,17 +108,17 @@ client.on('message', async function (message) {
 	}
 
 	if (ruleMatches) {
-		let uniqueMatches = [];
+		const uniqueMatches = [];
 		for (let match of ruleMatches) {
-			let flags = match.slice(1, match.indexOf('{', 1));
+			const flags = match.slice(1, match.indexOf('{', 1));
 			match = match.slice(2 + flags.length, -2).trim().replace(/ +/g, ' ').toLowerCase();
 			if (uniqueMatches.includes(match)) {
 				continue;
 			}
 			uniqueMatches.push(match);
 
-			let context = flags.includes('<');
-			let details = flags.includes('>');
+			const context = flags.includes('<');
+			const details = flags.includes('>');
 
 			if (/^[1-9]\.?$|^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
 				// match is a rule

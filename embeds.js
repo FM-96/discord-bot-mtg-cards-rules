@@ -2,12 +2,12 @@ module.exports.makeCardEmbed = makeCardEmbed;
 module.exports.makeErrorEmbed = makeErrorEmbed;
 module.exports.makeRuleEmbed = makeRuleEmbed;
 
-var client = require('./client.js');
+const client = require('./client.js');
 
-var botVersion = process.env.npm_package_version ? process.env.npm_package_version : require('./package.json').version;
+const botVersion = process.env.npm_package_version ? process.env.npm_package_version : require('./package.json').version;
 
 function makeCardEmbed(data, extended) {
-	var embed = {
+	const embed = {
 		title: data.title,
 		type: 'rich',
 		url: 'https://mtg.wtf/card?q=!' + encodeURIComponent(data.title),
@@ -55,7 +55,7 @@ function makeCardEmbed(data, extended) {
 		inline: true,
 	});
 
-	var mainText = '';
+	let mainText = '';
 	if (data.oracle) {
 		mainText += data.oracle;
 	}
@@ -95,8 +95,8 @@ function makeCardEmbed(data, extended) {
 	}
 
 	if (data.otherparts) {
-		var parts = '';
-		for (var part of data.otherparts) {
+		let parts = '';
+		for (const part of data.otherparts) {
 			parts += '[' + part + '](https://mtg.wtf/card?q=!' + encodeURIComponent(part) + ')\n';
 		}
 		embed.fields.push({
@@ -107,17 +107,17 @@ function makeCardEmbed(data, extended) {
 	}
 
 	if (extended) {
-		var usedCharacters = 0;
-		for (var field of embed.fields) {
+		let usedCharacters = 0;
+		for (const field of embed.fields) {
 			usedCharacters += field.name.length + String(field.value).length;
 		}
 
 		if (data.rulings) {
-			var rulingsText = '';
-			for (var i = 0; i < data.rulings.length; ++i) {
+			let rulingsText = '';
+			for (let i = 0; i < data.rulings.length; ++i) {
 				// check if the next ruling still fits in the message and if not, make a [x more] link
 				// Note: I originally thought the character limit is 2000, but this is apparently incorrect. The number below (1200) was found through trial and error
-				var rulingLength = data.rulings[i].date.length + data.rulings[i].text.length + 6;
+				const rulingLength = data.rulings[i].date.length + data.rulings[i].text.length + 6;
 				if (usedCharacters + rulingLength <= 1200) {
 					usedCharacters += rulingLength;
 					rulingsText += '**' + data.rulings[i].date + '** ' + data.rulings[i].text + '\n';
@@ -142,7 +142,7 @@ function makeCardEmbed(data, extended) {
 }
 
 function makeErrorEmbed(error, match, type) {
-	var embed = {
+	const embed = {
 		title: 'Error',
 		type: 'rich',
 		description: `*${type}: ${match}*\n${error.message}`,
@@ -157,7 +157,7 @@ function makeErrorEmbed(error, match, type) {
 }
 
 function makeRuleEmbed(data) {
-	var embed = {
+	const embed = {
 		type: 'rich',
 		color: 0xAD42F4,
 		footer: {
@@ -173,9 +173,9 @@ function makeRuleEmbed(data) {
 	embed.description = '';
 
 	if (data.type === 'glossary') {
-		var usedCharacters = 0;
+		let usedCharacters = 0;
 		embed.title = 'Glossary';
-		for (let item of data.content) {
+		for (const item of data.content) {
 			if (usedCharacters + item.term.length + item.text.length + 7 <= 1200) {
 				usedCharacters += item.term.length + item.text.length + 7;
 				embed.description += '**' + item.term + '**\n' + item.text + '\n\n';
@@ -186,7 +186,7 @@ function makeRuleEmbed(data) {
 		}
 	} else if (data.type === 'rule') {
 		embed.title = 'Comprehensive Rules';
-		for (let item of data.content) {
+		for (const item of data.content) {
 			embed.description += '**' + item.number + '** ' + item.text + '\n\n';
 		}
 		if (data.subrules && data.subrules.count > 0) {

@@ -1,7 +1,7 @@
 /*
 Personal ESLint config file
-Node (standalone) v1.3.0
-Made for ESLint v4.2.0 - v4.5.0
+Node (standalone) v2.0.0
+Made for ESLint v4.2.0 - v4.13.0+
 */
 {
 	"env": {
@@ -259,6 +259,13 @@ Made for ESLint v4.2.0 - v4.5.0
 		"no-useless-computed-key": "error",
 		"no-useless-constructor": "error",
 		"no-useless-rename": "error",
+		"no-var": "error",
+		"prefer-const": [
+			"error",
+			{
+				"destructuring": "all"
+			}
+		],
 		"prefer-rest-params": "error",
 		"prefer-spread": "error",
 		"rest-spread-spacing": "error",
