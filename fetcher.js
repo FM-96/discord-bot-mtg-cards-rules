@@ -382,14 +382,15 @@ function getSuperRule(rule) {
 
 function parseComprehensiveRules(fullRulesText) {
 	return new Promise(function (resolve, reject) {
-		var rulesStart = fullRulesText.indexOf('Credits') + 11; // 11 = 'Credits\r\n\r\n'
-		var rulesEnd = fullRulesText.indexOf('Glossary', rulesStart) - 4; // 4 = '\r\n\r\n'
-		var glossaryStart = rulesEnd + 16; // 16 = '\r\n\r\nGlossary\r\n\r\n'
-		var glossaryEnd = fullRulesText.indexOf('Credits', glossaryStart) - 6; // 6 = '\r\n\r\n\r\n'
+		var unixLeRulesText = fullRulesText.replace(/\r\n/g, '\n');
+		var rulesStart = unixLeRulesText.indexOf('Credits') + 9; // 9 = 'Credits\n\n'
+		var rulesEnd = unixLeRulesText.indexOf('Glossary', rulesStart) - 2; // 2 = '\n\n'
+		var glossaryStart = rulesEnd + 12; // 12 = '\n\nGlossary\n\n'
+		var glossaryEnd = unixLeRulesText.indexOf('Credits', glossaryStart) - 3; // 3 = '\n\n\n'
 
 		// parse rules
 		var rules = {};
-		var rulesText = fullRulesText.slice(rulesStart, rulesEnd).replace(/\r\n\r\n\r\n/g, '\r\n\r\n').split('\r\n\r\n');
+		var rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n\n\n/g, '\n\n').split('\n\n');
 		for (let item of rulesText) {
 			let number = item.slice(0, item.indexOf(' '));
 			let text = item.slice(item.indexOf(' ') + 1);
@@ -402,10 +403,10 @@ function parseComprehensiveRules(fullRulesText) {
 
 		// parse glossary
 		var glossary = {};
-		var glossaryText = fullRulesText.slice(glossaryStart, glossaryEnd).split('\r\n\r\n');
+		var glossaryText = unixLeRulesText.slice(glossaryStart, glossaryEnd).split('\n\n');
 		for (let item of glossaryText) {
-			let term = item.slice(0, item.indexOf('\r\n'));
-			let text = item.slice(item.indexOf('\r\n') + 2);
+			let term = item.slice(0, item.indexOf('\n'));
+			let text = item.slice(item.indexOf('\n') + 1);
 			glossary[term.toLowerCase()] = {
 				term: term,
 				text: text,
