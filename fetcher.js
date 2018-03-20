@@ -390,7 +390,7 @@ function parseComprehensiveRules(fullRulesText) {
 
 		// parse rules
 		var rules = {};
-		var rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n\n\n/g, '\n\n').split('\n\n');
+		var rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n\n\n/g, '\n\n').replace(/\nExample: /g, '\n__Example:__ ').split('\n\n');
 		for (let item of rulesText) {
 			let number = item.slice(0, item.indexOf(' '));
 			let text = item.slice(item.indexOf(' ') + 1);
