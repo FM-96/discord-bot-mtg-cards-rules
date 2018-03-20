@@ -1,4 +1,5 @@
 module.exports.makeCardEmbed = makeCardEmbed;
+module.exports.makeErrorEmbed = makeErrorEmbed;
 module.exports.makeRuleEmbed = makeRuleEmbed;
 
 var client = require('./client.js');
@@ -136,6 +137,21 @@ function makeCardEmbed(data, extended) {
 			});
 		}
 	}
+
+	return embed;
+}
+
+function makeErrorEmbed(error, match, type) {
+	var embed = {
+		title: 'Error',
+		type: 'rich',
+		description: `*${type}: ${match}*\n${error.message}`,
+		color: 0x00FFFF,
+		footer: {
+			text: client.user.username + ' | v' + botVersion,
+			icon_url: client.user.avatarURL,
+		},
+	};
 
 	return embed;
 }

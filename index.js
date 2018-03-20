@@ -93,8 +93,16 @@ client.on('message', async function (message) {
 				options.embed = embed;
 
 				await message.channel.send('', options);
-			} catch (error) {
-				winston.error(error);
+			} catch (err) {
+				winston.error(`Error (card: ${match}):`);
+				winston.error(err);
+				try {
+					const embed = await embeds.makeErrorEmbed(err, match, 'card');
+					await message.channel.send('', {embed: embed});
+				} catch (err2) {
+					winston.error('Error while trying to send error message:');
+					winston.error(err2);
+				}
 			}
 		}
 	}
@@ -124,8 +132,16 @@ client.on('message', async function (message) {
 					const embed = await embeds.makeRuleEmbed(ruleData);
 
 					await message.channel.send('', {embed: embed});
-				} catch (error) {
-					winston.error(error);
+				} catch (err) {
+					winston.error(`Error (rule: ${match}):`);
+					winston.error(err);
+					try {
+						const embed = await embeds.makeErrorEmbed(err, match, 'rule');
+						await message.channel.send('', {embed: embed});
+					} catch (err2) {
+						winston.error('Error while trying to send error message:');
+						winston.error(err2);
+					}
 				}
 			} else {
 				// match is a glossary term
@@ -138,8 +154,16 @@ client.on('message', async function (message) {
 					const embed = await embeds.makeRuleEmbed(glossaryData);
 
 					await message.channel.send('', {embed: embed});
-				} catch (error) {
-					winston.error(error);
+				} catch (err) {
+					winston.error(`Error (glossary: ${match}):`);
+					winston.error(err);
+					try {
+						const embed = await embeds.makeErrorEmbed(err, match, 'glossary');
+						await message.channel.send('', {embed: embed});
+					} catch (err2) {
+						winston.error('Error while trying to send error message:');
+						winston.error(err2);
+					}
 				}
 			}
 		}
