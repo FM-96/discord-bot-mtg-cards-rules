@@ -477,7 +477,7 @@ function parseComprehensiveRules(fullRulesText) {
 
 		// parse rules
 		const rules = {};
-		const rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n\n\n/g, '\n\n').replace(/\nExample: /g, '\n__Example:__ ').split('\n\n');
+		const rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n +\n/g, '\n\n').replace(/\n\n\n/g, '\n\n').replace(/\nExample: /g, '\n__Example:__ ').split('\n\n');
 		for (const item of rulesText) {
 			const number = item.slice(0, item.indexOf(' '));
 			const text = item.slice(item.indexOf(' ') + 1);
@@ -490,7 +490,7 @@ function parseComprehensiveRules(fullRulesText) {
 
 		// parse glossary
 		const glossary = {};
-		const glossaryText = unixLeRulesText.slice(glossaryStart, glossaryEnd).split('\n\n');
+		const glossaryText = unixLeRulesText.slice(glossaryStart, glossaryEnd).replace(/\n +\n/g, '\n\n').split('\n\n');
 		for (const item of glossaryText) {
 			const term = item.slice(0, item.indexOf('\n'));
 			const text = item.slice(item.indexOf('\n') + 1);
