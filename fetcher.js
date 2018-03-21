@@ -1,6 +1,10 @@
 module.exports.fetchCard = fetchCard;
 module.exports.fetchGlossary = fetchGlossary;
 module.exports.fetchRule = fetchRule;
+module.exports.navigateNextRule = navigateNextRule;
+module.exports.navigatePrevRule = navigatePrevRule;
+module.exports.navigateSubRule = navigateSubRule;
+module.exports.navigateSuperRule = navigateSuperRule;
 
 const cheerio = require('cheerio');
 const windows1252 = require('windows-1252');
@@ -130,7 +134,7 @@ function fetchGlossary(term) {
 	);
 }
 
-function fetchRule(rule, context, details) {
+function fetchRule(rule, nav) {
 	return getComprehensiveRules().then(
 		function (result) {
 			const ruleObject = {
@@ -140,14 +144,23 @@ function fetchRule(rule, context, details) {
 
 			if (comprehensiveRules.rules[rule]) {
 				ruleObject.content.push(comprehensiveRules.rules[rule]);
-				if (details) {
-					ruleObject.subrules = getSubRules(comprehensiveRules.rules[rule]);
-				}
-				if (context) {
+				if (nav) {
+					const siblings = getSubRules(getSuperRule(comprehensiveRules.rules[rule]));
+					siblings.position = siblings.list.findIndex(e => e.number === comprehensiveRules.rules[rule].number);
+
+					const subrules = getSubRules(comprehensiveRules.rules[rule]);
+
+					const superrules = [];
 					let superRule = comprehensiveRules.rules[rule];
 					while ((superRule = getSuperRule(superRule))) {
-						ruleObject.content.splice(0, 0, superRule);
+						superrules.unshift(superRule);
 					}
+
+					ruleObject.nav = {
+						siblings,
+						subrules,
+						superrules,
+					};
 				}
 			}
 
@@ -286,15 +299,17 @@ function getComprehensiveRules() {
 }
 
 function getSubRules(rule) {
-	// 1. Game Concepts
-	if (rule.number.length === 2) {
+	// false (= return top-level rules)
+	if (rule === false) {
 		let count = 0;
 		let start = false;
 		let end = false;
+		const list = [];
 		for (;;) {
 			count++;
-			const nextRule = String((Number(rule.number[0]) * 100) + (count - 1));
+			const nextRule = String(count);
 			if (comprehensiveRules.rules[nextRule]) {
+				list.push(comprehensiveRules.rules[nextRule]);
 				if (!start) {
 					start = comprehensiveRules.rules[nextRule].number;
 				}
@@ -308,6 +323,34 @@ function getSubRules(rule) {
 			count: count,
 			start: start,
 			end: end,
+			list: list,
+		};
+	}
+	// 1. Game Concepts
+	if (rule.number.length === 2) {
+		let count = 0;
+		let start = false;
+		let end = false;
+		const list = [];
+		for (;;) {
+			count++;
+			const nextRule = String((Number(rule.number[0]) * 100) + (count - 1));
+			if (comprehensiveRules.rules[nextRule]) {
+				list.push(comprehensiveRules.rules[nextRule]);
+				if (!start) {
+					start = comprehensiveRules.rules[nextRule].number;
+				}
+				end = comprehensiveRules.rules[nextRule].number;
+			} else {
+				count--;
+				break;
+			}
+		}
+		return {
+			count: count,
+			start: start,
+			end: end,
+			list: list,
 		};
 	}
 	// 100. General
@@ -315,10 +358,12 @@ function getSubRules(rule) {
 		let count = 0;
 		let start = false;
 		let end = false;
+		const list = [];
 		for (;;) {
 			count++;
 			const nextRule = rule.number.slice(0, 3) + count;
 			if (comprehensiveRules.rules[nextRule]) {
+				list.push(comprehensiveRules.rules[nextRule]);
 				if (!start) {
 					start = comprehensiveRules.rules[nextRule].number;
 				}
@@ -332,6 +377,7 @@ function getSubRules(rule) {
 			count: count,
 			start: start,
 			end: end,
+			list: list,
 		};
 	}
 	// 100.1. These Magic rules apply to any Magic game with two or more players, including two-player games and multiplayer games.
@@ -339,11 +385,13 @@ function getSubRules(rule) {
 		let count = 0;
 		let start = false;
 		let end = false;
+		const list = [];
 		const subletters = '.abcdefghijkmnpqrstuvwxyz';
 		for (;;) {
 			count++;
 			const nextRule = rule.number.replace(/\./g, '') + subletters[count];
 			if (comprehensiveRules.rules[nextRule]) {
+				list.push(comprehensiveRules.rules[nextRule]);
 				if (!start) {
 					start = comprehensiveRules.rules[nextRule].number;
 				}
@@ -357,6 +405,7 @@ function getSubRules(rule) {
 			count: count,
 			start: start,
 			end: end,
+			list: list,
 		};
 	}
 	// 100.1a A two-player game is a game that begins with only two players.
@@ -378,6 +427,44 @@ function getSuperRule(rule) {
 	}
 	// 100.1a A two-player game is a game that begins with only two players.
 	return comprehensiveRules.rules[rule.number.slice(0, -1).replace(/\./g, '')];
+}
+
+async function navigateNextRule(rule) {
+	await getComprehensiveRules();
+	const siblings = getSubRules(getSuperRule(comprehensiveRules.rules[rule]));
+	siblings.position = siblings.list.findIndex(e => e.number === comprehensiveRules.rules[rule].number);
+	if (siblings.position === siblings.count - 1) {
+		return false;
+	}
+	return fetchRule(siblings.list[siblings.position + 1].number.replace(/\./g, ''), true);
+}
+
+async function navigatePrevRule(rule) {
+	await getComprehensiveRules();
+	const siblings = getSubRules(getSuperRule(comprehensiveRules.rules[rule]));
+	siblings.position = siblings.list.findIndex(e => e.number === comprehensiveRules.rules[rule].number);
+	if (siblings.position === 0) {
+		return false;
+	}
+	return fetchRule(siblings.list[siblings.position - 1].number.replace(/\./g, ''), true);
+}
+
+async function navigateSubRule(rule) {
+	await getComprehensiveRules();
+	const subrules = getSubRules(comprehensiveRules.rules[rule]);
+	if (subrules.count === 0) {
+		return false;
+	}
+	return fetchRule(subrules.list[0].number.replace(/\./g, ''), true);
+}
+
+async function navigateSuperRule(rule) {
+	await getComprehensiveRules();
+	const superRule = getSuperRule(comprehensiveRules.rules[rule]);
+	if (!superRule) {
+		return false;
+	}
+	return fetchRule(superRule.number.replace(/\./g, ''), true);
 }
 
 function parseComprehensiveRules(fullRulesText) {

@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const embeds = require('./embeds.js');
+const emojis = require('./emojis.js');
 const fetcher = require('./fetcher.js');
 
 let botToken = null;
@@ -62,7 +63,7 @@ client.on('message', async function (message) {
 	}
 
 	const cardMatches = message.content.match(/\[(?:!?|\??)*\[[^[\n]+?\]\]/g);
-	const ruleMatches = message.content.match(/\{(?:<?|>?)*\{[^{\n]+?\}\}/g);
+	const ruleMatches = message.content.match(/\{(?:>?)*\{[^{\n]+?\}\}/g);
 
 	if (cardMatches) {
 		const uniqueMatches = [];
@@ -117,21 +118,29 @@ client.on('message', async function (message) {
 			}
 			uniqueMatches.push(match);
 
-			const context = flags.includes('<');
-			const details = flags.includes('>');
+			const nav = flags.includes('>');
 
 			if (/^[1-9]\.?$|^[0-9]{3}\.?([0-9]{1,3}[a-z]?\.?)?$/.test(match)) {
 				// match is a rule
 				match = match.replace(/\./g, '');
 				try {
-					const ruleData = await fetcher.fetchRule(match, context, details);
+					const ruleData = await fetcher.fetchRule(match, nav);
 					if (ruleData.content.length === 0) {
 						continue;
 					}
 
 					const embed = await embeds.makeRuleEmbed(ruleData);
 
-					await message.channel.send('', {embed: embed});
+					const rulesMessage = await message.channel.send('', {embed: embed});
+
+					if (nav) {
+						rulesMessage.react(emojis.STOP)
+							.then(reaction => reaction.message.react(emojis.SUPERRULE))
+							.then(reaction => reaction.message.react(emojis.PREVIOUS_RULE))
+							.then(reaction => reaction.message.react(emojis.NEXT_RULE))
+							.then(reaction => reaction.message.react(emojis.SUBRULE))
+							.catch(winston.error);
+					}
 				} catch (err) {
 					winston.error(`Error (rule: ${match}):`);
 					winston.error(err);
@@ -168,6 +177,152 @@ client.on('message', async function (message) {
 			}
 		}
 	}
+});
+
+client.on('messageReactionAdd', async function (reaction, user) {
+	if (reaction.message.author.id !== client.user.id || user.id === client.user.id || !reaction.message.embeds[0].fields.length || reaction.message.embeds[0].fields[0].name !== 'Navigation') {
+		return;
+	}
+
+	if (Object.values(emojis).includes(reaction.emoji.name)) {
+		reaction.remove(user).catch(winston.error);
+	} else {
+		return;
+	}
+
+	const rule = reaction.message.embeds[0].description.match(/\*\*(.+?)\*\*/)[1].replace(/\./g, '');
+	let ruleData, embed;
+
+	switch (reaction.emoji.name) {
+		case emojis.NEXT_RULE:
+			try {
+				ruleData = await fetcher.navigateNextRule(rule);
+				if (ruleData === false) {
+					return;
+				}
+				embed = embeds.makeRuleEmbed(ruleData);
+				await reaction.message.edit({embed});
+			} catch (err) {
+				const errorRule = ruleData.content[0].number.replace(/\./g, '');
+				winston.error(`Error (rule: ${errorRule}):`);
+				winston.error(err);
+				try {
+					embed = await embeds.makeErrorEmbed(err, errorRule, 'rule');
+					await reaction.message.edit({embed});
+				} catch (err2) {
+					winston.error('Error while trying to send error message:');
+					winston.error(err2);
+				}
+			}
+			break;
+		case emojis.PREVIOUS_RULE:
+			try {
+				ruleData = await fetcher.navigatePrevRule(rule);
+				if (ruleData === false) {
+					return;
+				}
+				embed = embeds.makeRuleEmbed(ruleData);
+				await reaction.message.edit({embed});
+			} catch (err) {
+				const errorRule = ruleData.content[0].number.replace(/\./g, '');
+				winston.error(`Error (rule: ${errorRule}):`);
+				winston.error(err);
+				try {
+					embed = await embeds.makeErrorEmbed(err, errorRule, 'rule');
+					await reaction.message.edit({embed});
+				} catch (err2) {
+					winston.error('Error while trying to send error message:');
+					winston.error(err2);
+				}
+			}
+			break;
+		case emojis.STOP:
+			try {
+				reaction.message.clearReactions().catch(winston.error);
+				ruleData = await fetcher.fetchRule(rule, false);
+				embed = embeds.makeRuleEmbed(ruleData);
+				await reaction.message.edit({embed});
+			} catch (err) {
+				const errorRule = ruleData.content[0].number.replace(/\./g, '');
+				winston.error(`Error (rule: ${errorRule}):`);
+				winston.error(err);
+				try {
+					embed = await embeds.makeErrorEmbed(err, errorRule, 'rule');
+					await reaction.message.edit({embed});
+				} catch (err2) {
+					winston.error('Error while trying to send error message:');
+					winston.error(err2);
+				}
+			}
+			break;
+		case emojis.SUBRULE:
+			try {
+				ruleData = await fetcher.navigateSubRule(rule);
+				if (ruleData === false) {
+					return;
+				}
+				embed = embeds.makeRuleEmbed(ruleData);
+				await reaction.message.edit({embed});
+			} catch (err) {
+				const errorRule = ruleData.content[0].number.replace(/\./g, '');
+				winston.error(`Error (rule: ${errorRule}):`);
+				winston.error(err);
+				try {
+					embed = await embeds.makeErrorEmbed(err, errorRule, 'rule');
+					await reaction.message.edit({embed});
+				} catch (err2) {
+					winston.error('Error while trying to send error message:');
+					winston.error(err2);
+				}
+			}
+			break;
+		case emojis.SUPERRULE:
+			try {
+				ruleData = await fetcher.navigateSuperRule(rule);
+				if (ruleData === false) {
+					return;
+				}
+				embed = embeds.makeRuleEmbed(ruleData);
+				await reaction.message.edit({embed});
+			} catch (err) {
+				const errorRule = ruleData.content[0].number.replace(/\./g, '');
+				winston.error(`Error (rule: ${errorRule}):`);
+				winston.error(err);
+				try {
+					embed = await embeds.makeErrorEmbed(err, errorRule, 'rule');
+					await reaction.message.edit({embed});
+				} catch (err2) {
+					winston.error('Error while trying to send error message:');
+					winston.error(err2);
+				}
+			}
+			break;
+		default:
+			// no-op
+	}
+});
+
+// emit messageReactionAdd event for uncached messages
+// see https://discordjs.guide/#/popular-topics/reactions
+client.on('raw', async function (event) {
+	if (event.t !== 'MESSAGE_REACTION_ADD') {
+		return;
+	}
+
+	const {d: data} = event;
+	const channel = client.channels.get(data.channel_id);
+
+	if (channel.messages.has(data.message_id)) {
+		return;
+	}
+
+	const user = client.users.get(data.user_id);
+	const message = await channel.fetchMessage(data.message_id);
+
+	const emojiKey = (data.emoji.id) ? `${data.emoji.name}:${data.emoji.id}` : data.emoji.name;
+	const reaction = message.reactions.get(emojiKey);
+
+	client.emit('messageReactionAdd', reaction, user);
 });
 
 client.on('ready', function () {

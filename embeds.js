@@ -189,8 +189,19 @@ function makeRuleEmbed(data) {
 		for (const item of data.content) {
 			embed.description += '**' + item.number + '** ' + item.text + '\n\n';
 		}
-		if (data.subrules && data.subrules.count > 0) {
-			embed.description += '*(' + data.subrules.count + ' subrules: ' + data.subrules.start + ' - ' + data.subrules.end + ')*';
+		if (data.nav) {
+			const navField = {
+				name: 'Navigation',
+				value: '',
+			};
+
+			navField.value += data.nav.siblings.list.map((e, i) => (data.nav.siblings.position === i ? `**${e.number}**` : e.number)).join(' - ') + '\n\n';
+
+			if (data.nav.subrules.count > 0) {
+				navField.value += data.nav.subrules.list.map(e => e.number).join(' - ') + '\n\n';
+			}
+
+			embed.fields.push(navField);
 		}
 	}
 
