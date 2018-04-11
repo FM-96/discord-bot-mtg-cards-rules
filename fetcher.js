@@ -12,10 +12,13 @@ const windows1252 = require('windows-1252');
 const https = require('https');
 const Transform = require('stream').Transform;
 
+const RULES_UPDATE_CHECK_FREQUENCY = 86400000; // 1 day
+
 const comprehensiveRules = {
 	glossary: {},
 	rules: {},
 	updated: '',
+	lastUpdateCheck: 0,
 };
 
 function fetchCard(cardName) {
@@ -253,6 +256,10 @@ function getColors(manacost, colorIndicator, oracleText) {
 }
 
 function getComprehensiveRules() {
+	if (Date.now() - comprehensiveRules.lastUpdateCheck < RULES_UPDATE_CHECK_FREQUENCY) {
+		return Promise.resolve(true);
+	}
+
 	return new Promise(function (resolve, reject) {
 		https.request({
 			hostname: 'magic.wizards.com',
@@ -287,10 +294,12 @@ function getComprehensiveRules() {
 
 						response.on('end', function () {
 							comprehensiveRules.updated = rulesDate;
+							comprehensiveRules.lastUpdateCheck = Date.now();
 							resolve(parseComprehensiveRules(windows1252.decode(responseData.read().toString('binary'))));
 						});
 					}).end();
 				} else {
+					comprehensiveRules.lastUpdateCheck = Date.now();
 					resolve(true);
 				}
 			});
