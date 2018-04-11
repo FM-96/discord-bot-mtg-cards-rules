@@ -295,7 +295,8 @@ function getComprehensiveRules() {
 						response.on('end', function () {
 							comprehensiveRules.updated = rulesDate;
 							comprehensiveRules.lastUpdateCheck = Date.now();
-							resolve(parseComprehensiveRules(windows1252.decode(responseData.read().toString('binary'))));
+							parseComprehensiveRules(windows1252.decode(responseData.read().toString('binary')));
+							resolve(true);
 						});
 					}).end();
 				} else {
@@ -477,39 +478,35 @@ async function navigateSuperRule(rule) {
 }
 
 function parseComprehensiveRules(fullRulesText) {
-	return new Promise(function (resolve, reject) {
-		const unixLeRulesText = fullRulesText.replace(/\r\n/g, '\n');
-		const rulesStart = unixLeRulesText.indexOf('Credits') + 9; // 9 = 'Credits\n\n'
-		const rulesEnd = unixLeRulesText.indexOf('Glossary', rulesStart) - 2; // 2 = '\n\n'
-		const glossaryStart = rulesEnd + 12; // 12 = '\n\nGlossary\n\n'
-		const glossaryEnd = unixLeRulesText.indexOf('Credits', glossaryStart) - 3; // 3 = '\n\n\n'
+	const unixLeRulesText = fullRulesText.replace(/\r\n/g, '\n');
+	const rulesStart = unixLeRulesText.indexOf('Credits') + 9; // 9 = 'Credits\n\n'
+	const rulesEnd = unixLeRulesText.indexOf('Glossary', rulesStart) - 2; // 2 = '\n\n'
+	const glossaryStart = rulesEnd + 12; // 12 = '\n\nGlossary\n\n'
+	const glossaryEnd = unixLeRulesText.indexOf('Credits', glossaryStart) - 3; // 3 = '\n\n\n'
 
-		// parse rules
-		const rules = {};
-		const rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n +\n/g, '\n\n').replace(/\n\n\n/g, '\n\n').replace(/\nExample: /g, '\n__Example:__ ').split('\n\n');
-		for (const item of rulesText) {
-			const number = item.slice(0, item.indexOf(' '));
-			const text = item.slice(item.indexOf(' ') + 1);
-			rules[number.toLowerCase().replace(/\./g, '')] = {
-				number: number,
-				text: text,
-			};
-		}
-		comprehensiveRules.rules = rules;
+	// parse rules
+	const rules = {};
+	const rulesText = unixLeRulesText.slice(rulesStart, rulesEnd).replace(/\n +\n/g, '\n\n').replace(/\n\n\n/g, '\n\n').replace(/\nExample: /g, '\n__Example:__ ').split('\n\n');
+	for (const item of rulesText) {
+		const number = item.slice(0, item.indexOf(' '));
+		const text = item.slice(item.indexOf(' ') + 1);
+		rules[number.toLowerCase().replace(/\./g, '')] = {
+			number: number,
+			text: text,
+		};
+	}
+	comprehensiveRules.rules = rules;
 
-		// parse glossary
-		const glossary = {};
-		const glossaryText = unixLeRulesText.slice(glossaryStart, glossaryEnd).replace(/\n +\n/g, '\n\n').split('\n\n');
-		for (const item of glossaryText) {
-			const term = item.slice(0, item.indexOf('\n'));
-			const text = item.slice(item.indexOf('\n') + 1);
-			glossary[term.toLowerCase()] = {
-				term: term,
-				text: text,
-			};
-		}
-		comprehensiveRules.glossary = glossary;
-
-		resolve(true);
-	});
+	// parse glossary
+	const glossary = {};
+	const glossaryText = unixLeRulesText.slice(glossaryStart, glossaryEnd).replace(/\n +\n/g, '\n\n').split('\n\n');
+	for (const item of glossaryText) {
+		const term = item.slice(0, item.indexOf('\n'));
+		const text = item.slice(item.indexOf('\n') + 1);
+		glossary[term.toLowerCase()] = {
+			term: term,
+			text: text,
+		};
+	}
+	comprehensiveRules.glossary = glossary;
 }
