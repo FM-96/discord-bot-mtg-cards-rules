@@ -1,6 +1,8 @@
-module.exports.makeCardEmbed = makeCardEmbed;
-module.exports.makeErrorEmbed = makeErrorEmbed;
-module.exports.makeRuleEmbed = makeRuleEmbed;
+module.exports = {
+	makeCardEmbed,
+	makeErrorEmbed,
+	makeRuleEmbed,
+};
 
 const client = require('./client.js');
 

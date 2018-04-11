@@ -1,10 +1,12 @@
-module.exports.fetchCard = fetchCard;
-module.exports.fetchGlossary = fetchGlossary;
-module.exports.fetchRule = fetchRule;
-module.exports.navigateNextRule = navigateNextRule;
-module.exports.navigatePrevRule = navigatePrevRule;
-module.exports.navigateSubRule = navigateSubRule;
-module.exports.navigateSuperRule = navigateSuperRule;
+module.exports = {
+	fetchCard,
+	fetchGlossary,
+	fetchRule,
+	navigateNextRule,
+	navigatePrevRule,
+	navigateSubRule,
+	navigateSuperRule,
+};
 
 const cheerio = require('cheerio');
 const windows1252 = require('windows-1252');
