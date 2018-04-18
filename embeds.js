@@ -66,6 +66,12 @@ function makeCardEmbed(data, extended) {
 	if (data.oracle) {
 		mainText += data.oracle;
 	}
+
+	// fix for http://mtg.wtf/card/ust/136/Urza-Academy-Headmaster (remove the reminder text)
+	if (data.title === 'Urza, Academy Headmaster') {
+		mainText = mainText.replace(/\n\n\(Randomly choose one of —(?:.|\n)+?\)(?=\n\n\[|$)/g, '');
+	}
+
 	if (data.flavor) {
 		if (mainText) {
 			mainText += '\n\n';
