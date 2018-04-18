@@ -4,6 +4,11 @@ module.exports = {
 	makeRuleEmbed,
 };
 
+// https://discordapp.com/developers/docs/resources/channel#embed-limits
+const EMBED_LIMIT_DESCRIPTION = 2048;
+const EMBED_LIMIT_FIELD_VALUE = 1024;
+const EMBED_LIMIT_TOTAL = 6000; // is that really necessary?
+
 const client = require('./client.js');
 
 const botVersion = process.env.npm_package_version ? process.env.npm_package_version : require('./package.json').version;
@@ -108,36 +113,54 @@ function makeCardEmbed(data, extended) {
 		});
 	}
 
-	if (extended) {
-		let usedCharacters = 0;
+	if (extended && data.rulings) {
+		let totalCharacters = 0;
+		totalCharacters += embed.title.length;
+		totalCharacters += embed.footer.text.length;
 		for (const field of embed.fields) {
-			usedCharacters += field.name.length + String(field.value).length;
+			totalCharacters += field.name.length + String(field.value).length;
 		}
 
-		if (data.rulings) {
-			let rulingsText = '';
-			for (let i = 0; i < data.rulings.length; ++i) {
-				// check if the next ruling still fits in the message and if not, make a [x more] link
-				// Note: I originally thought the character limit is 2000, but this is apparently incorrect. The number below (1200) was found through trial and error
-				const rulingLength = data.rulings[i].date.length + data.rulings[i].text.length + 6;
-				if (usedCharacters + rulingLength <= 1200) {
-					usedCharacters += rulingLength;
-					rulingsText += '**' + data.rulings[i].date + '** ' + data.rulings[i].text + '\n';
+		const rulings = data.rulings.map(e => '**' + e.date + '** ' + e.text + '\n');
+		let rulingsCharacters = 0;
+		let fittingRulings = 0;
+		let remainingRulingsText;
+
+		for (let i = 0; i < rulings.length; ++i) {
+			const ruling = rulings[i];
+			if (rulingsCharacters + ruling.length <= EMBED_LIMIT_FIELD_VALUE && totalCharacters + rulingsCharacters + ruling.length <= EMBED_LIMIT_TOTAL) {
+				// ruling fits within embed limits
+				fittingRulings++;
+				rulingsCharacters += ruling.length;
+			} else {
+				if (i === 0) {
+					remainingRulingsText = '[' + rulings.length + ' rulings](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
 				} else {
-					if (i === 0) {
-						rulingsText += '[' + data.rulings.length + ' rulings](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
-					} else {
-						rulingsText += '[' + (data.rulings.length - i) + ' more](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
-					}
-					break;
+					remainingRulingsText = '[' + (rulings.length - i) + ' more](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
 				}
+				if (rulingsCharacters + remainingRulingsText.length > EMBED_LIMIT_FIELD_VALUE || totalCharacters + rulingsCharacters + remainingRulingsText.length > EMBED_LIMIT_TOTAL) {
+					if (i === 0) {
+						// not even 1 ruling fits into embed limits AND the "more rulings" link doesn't fit either
+						throw new Error('Rulings don\'t fit within embed limits');
+					}
+					fittingRulings--;
+					rulingsCharacters -= rulings[i - 1].length;
+					remainingRulingsText = '[' + (rulings.length - (i - 1)) + ' more](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
+				}
+				break;
 			}
-			embed.fields.push({
-				name: 'Rulings',
-				value: rulingsText,
-				inline: false,
-			});
 		}
+
+		let rulingsText = rulings.slice(0, fittingRulings).join('');
+		if (fittingRulings < rulings.length) {
+			rulingsText += remainingRulingsText;
+		}
+
+		embed.fields.push({
+			name: 'Rulings',
+			value: rulingsText,
+			inline: false,
+		});
 	}
 
 	return embed;
@@ -175,18 +198,38 @@ function makeRuleEmbed(data) {
 	embed.description = '';
 
 	if (data.type === 'glossary') {
-		let usedCharacters = 0;
 		embed.title = 'Glossary';
-		for (const item of data.content) {
-			if (usedCharacters + item.term.length + item.text.length + 7 <= 1200) {
-				usedCharacters += item.term.length + item.text.length + 7;
-				embed.description += '**' + item.term + '**\n' + item.text + '\n\n';
+
+		const glossaryEntries = data.content.map(e => '**' + e.term + '**\n' + e.text + '\n\n');
+		let glossaryCharacters = 0;
+		let fittingEntries = 0;
+		let remainingEntriesText;
+
+		for (let i = 0; i < glossaryEntries.length; ++i) {
+			const entry = glossaryEntries[i];
+			if (glossaryCharacters + entry.length <= EMBED_LIMIT_DESCRIPTION) {
+				// glossary entry fits within embed limits
+				fittingEntries++;
+				glossaryCharacters += entry.length;
 			} else {
-				embed.description += '*(' + (data.content.length - data.content.indexOf(item)) + ' more matching entries, be more specific.)*';
+				remainingEntriesText = '*(' + (glossaryEntries.length - i) + ' more matching entries, be more specific.)*';
+				if (glossaryCharacters + remainingEntriesText.length > EMBED_LIMIT_DESCRIPTION) {
+					fittingEntries--;
+					glossaryCharacters -= glossaryEntries[i - 1].length;
+					remainingEntriesText = '*(' + (glossaryEntries.length - (i - 1)) + ' more matching entries, be more specific.)*';
+				}
 				break;
 			}
 		}
+
+		let glossaryText = glossaryEntries.slice(0, fittingEntries).join('');
+		if (fittingEntries < glossaryEntries.length) {
+			glossaryText += remainingEntriesText;
+		}
+
+		embed.description = glossaryText;
 	} else if (data.type === 'rule') {
+		// TODO check for embed limits
 		embed.title = 'Comprehensive Rules';
 		for (const item of data.content) {
 			embed.description += '**' + item.number + '** ' + item.text + '\n\n';
