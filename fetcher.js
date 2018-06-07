@@ -110,7 +110,7 @@ function fetchCard(cardName) {
 				});
 			}
 
-			cardObject.image = 'https://mtg.wtf' + $('.card_picture').attr('src');
+			cardObject.image = 'https://mtg.wtf' + $('.card_picture img').attr('src');
 
 			return cardObject;
 		}
