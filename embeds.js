@@ -4,10 +4,8 @@ module.exports = {
 	makeRuleEmbed,
 };
 
-// https://discordapp.com/developers/docs/resources/channel#embed-limits
-const EMBED_LIMIT_DESCRIPTION = 2048;
-const EMBED_LIMIT_FIELD_VALUE = 1024;
-const EMBED_LIMIT_TOTAL = 6000; // is that really necessary?
+const colors = require('./constants/colors.js');
+const embedLimits = require('./constants/embedLimits.js');
 
 const client = require('./client.js');
 
@@ -29,18 +27,18 @@ function makeCardEmbed(data, extended) {
 	};
 
 	if (data.colors.length > 1) {
-		embed.color = 0xECD57A;
+		embed.color = colors.MULTICOLOR;
 	} else {
 		if (data.colors === 'W') {
-			embed.color = 0xFFFFDD;
+			embed.color = colors.WHITE;
 		} else if (data.colors === 'U') {
-			embed.color = 0x378BC6;
+			embed.color = colors.BLUE;
 		} else if (data.colors === 'B') {
-			embed.color = 0x161616;
+			embed.color = colors.BLACK;
 		} else if (data.colors === 'R') {
-			embed.color = 0xAF1D1D;
+			embed.color = colors.RED;
 		} else if (data.colors === 'G') {
-			embed.color = 0x5BD387;
+			embed.color = colors.GREEN;
 		}
 	}
 
@@ -134,7 +132,7 @@ function makeCardEmbed(data, extended) {
 
 		for (let i = 0; i < rulings.length; ++i) {
 			const ruling = rulings[i];
-			if (rulingsCharacters + ruling.length <= EMBED_LIMIT_FIELD_VALUE && totalCharacters + rulingsCharacters + ruling.length <= EMBED_LIMIT_TOTAL) {
+			if (rulingsCharacters + ruling.length <= embedLimits.FIELD_VALUE && totalCharacters + rulingsCharacters + ruling.length <= embedLimits.TOTAL) {
 				// ruling fits within embed limits
 				fittingRulings++;
 				rulingsCharacters += ruling.length;
@@ -144,7 +142,7 @@ function makeCardEmbed(data, extended) {
 				} else {
 					remainingRulingsText = '[' + (rulings.length - i) + ' more](https://mtg.wtf/card?q=!' + encodeURIComponent(data.title) + ')';
 				}
-				if (rulingsCharacters + remainingRulingsText.length > EMBED_LIMIT_FIELD_VALUE || totalCharacters + rulingsCharacters + remainingRulingsText.length > EMBED_LIMIT_TOTAL) {
+				if (rulingsCharacters + remainingRulingsText.length > embedLimits.FIELD_VALUE || totalCharacters + rulingsCharacters + remainingRulingsText.length > embedLimits.TOTAL) {
 					if (i === 0) {
 						// not even 1 ruling fits into embed limits AND the "more rulings" link doesn't fit either
 						throw new Error('Rulings don\'t fit within embed limits');
@@ -213,13 +211,13 @@ function makeRuleEmbed(data) {
 
 		for (let i = 0; i < glossaryEntries.length; ++i) {
 			const entry = glossaryEntries[i];
-			if (glossaryCharacters + entry.length <= EMBED_LIMIT_DESCRIPTION) {
+			if (glossaryCharacters + entry.length <= embedLimits.DESCRIPTION) {
 				// glossary entry fits within embed limits
 				fittingEntries++;
 				glossaryCharacters += entry.length;
 			} else {
 				remainingEntriesText = '*(' + (glossaryEntries.length - i) + ' more matching entries, be more specific.)*';
-				if (glossaryCharacters + remainingEntriesText.length > EMBED_LIMIT_DESCRIPTION) {
+				if (glossaryCharacters + remainingEntriesText.length > embedLimits.DESCRIPTION) {
 					fittingEntries--;
 					glossaryCharacters -= glossaryEntries[i - 1].length;
 					remainingEntriesText = '*(' + (glossaryEntries.length - (i - 1)) + ' more matching entries, be more specific.)*';

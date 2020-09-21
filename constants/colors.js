@@ -1,0 +1,8 @@
+module.exports = {
+	BLACK: 0x161616,
+	BLUE: 0x378BC6,
+	GREEN: 0x5BD387,
+	MULTICOLOR: 0xECD57A,
+	RED: 0xAF1D1D,
+	WHITE: 0xFFFFDD,
+};

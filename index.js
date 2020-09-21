@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const embeds = require('./embeds.js');
-const emojis = require('./emojis.js');
+const emojis = require('./constants/emojis.js');
 const fetcher = require('./fetcher.js');
 
 let botToken = null;
@@ -13,7 +13,7 @@ const client = require('./client.js');
 
 // set logging level
 let loggingLevel = 'info';
-const loggingLevels = require('./logging-levels.js');
+const loggingLevels = require('./constants/logging-levels.js');
 if (argv.logging !== undefined && Object.keys(loggingLevels.levels).includes(argv.logging)) {
 	loggingLevel = argv.logging;
 } else if (argv.verbose === true || argv.v === true) {
