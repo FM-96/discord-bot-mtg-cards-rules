@@ -88,7 +88,7 @@ client.on('message', async function (message) {
 				const embed = await embeds.makeCardEmbed(cardData, extended);
 				const options = {};
 				if (picture) {
-					options.file = embed.image.url;
+					options.files = [embed.image.url];
 				}
 				delete embed.image;
 				options.embed = embed;
@@ -180,12 +180,21 @@ client.on('message', async function (message) {
 });
 
 client.on('messageReactionAdd', async function (reaction, user) {
+	if (reaction.partial) {
+		try {
+			await reaction.fetch();
+		} catch (err) {
+			winston.error('Error while trying to fetch partial reaction:');
+			winston.error(err);
+		}
+	}
+
 	if (reaction.message.author.id !== client.user.id || user.id === client.user.id || !reaction.message.embeds[0].fields.length || reaction.message.embeds[0].fields[0].name !== 'Navigation') {
 		return;
 	}
 
 	if (Object.values(emojis).includes(reaction.emoji.name)) {
-		reaction.remove(user).catch(winston.error);
+		reaction.users.remove(user).catch(winston.error);
 	} else {
 		return;
 	}
@@ -238,7 +247,7 @@ client.on('messageReactionAdd', async function (reaction, user) {
 			break;
 		case emojis.STOP:
 			try {
-				reaction.message.clearReactions().catch(winston.error);
+				reaction.message.reactions.removeAll().catch(winston.error);
 				ruleData = await fetcher.fetchRule(rule, false);
 				embed = embeds.makeRuleEmbed(ruleData);
 				await reaction.message.edit({embed});
@@ -300,29 +309,6 @@ client.on('messageReactionAdd', async function (reaction, user) {
 		default:
 			// no-op
 	}
-});
-
-// emit messageReactionAdd event for uncached messages
-// see https://discordjs.guide/#/popular-topics/reactions
-client.on('raw', async function (event) {
-	if (event.t !== 'MESSAGE_REACTION_ADD') {
-		return;
-	}
-
-	const {d: data} = event;
-	const channel = client.channels.get(data.channel_id);
-
-	if (channel.messages.has(data.message_id)) {
-		return;
-	}
-
-	const user = client.users.get(data.user_id);
-	const message = await channel.fetchMessage(data.message_id);
-
-	const emojiKey = (data.emoji.id) ? `${data.emoji.name}:${data.emoji.id}` : data.emoji.name;
-	const reaction = message.reactions.get(emojiKey);
-
-	client.emit('messageReactionAdd', reaction, user);
 });
 
 client.on('ready', function () {
