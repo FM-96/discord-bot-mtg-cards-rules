@@ -265,7 +265,7 @@ function getComprehensiveRules() {
 	return new Promise(function (resolve, reject) {
 		https.request({
 			hostname: 'magic.wizards.com',
-			path: '/en/game-info/gameplay/rules-and-formats/rules',
+			path: '/en/rules',
 		}, function (response) {
 			let responseData = '';
 
@@ -281,7 +281,7 @@ function getComprehensiveRules() {
 		function (result) {
 			return new Promise(function (resolve, reject) { // I need to return a promise here because http.request is asynchronous
 				const $ = cheerio.load(result);
-				const rulesPath = $('a.cta[href$=".txt"]').attr('href').split('.com')[1];
+				const rulesPath = $('a.cta[href$=".txt"]').attr('href').split('.com')[1].replace(/ /, '%20');
 				const rulesDate = /%20(.+?)\.txt$/.exec(rulesPath)[1];
 				if (comprehensiveRules.updated !== rulesDate) {
 					https.request({
