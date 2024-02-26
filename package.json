@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-mtg-cards-rules",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "description": "Looks up cards and rules for the game \"Magic: the Gathering\".",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,6 @@
     "cheerio": "^0.22.0",
     "discord.js": "^12.3.1",
     "minimist": "^1.2.0",
-    "windows-1252": "^1.0.0",
     "winston": "^2.3.0"
   },
   "devDependencies": {

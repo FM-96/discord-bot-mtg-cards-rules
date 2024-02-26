@@ -9,7 +9,6 @@ module.exports = {
 };
 
 const cheerio = require('cheerio');
-const windows1252 = require('windows-1252');
 
 const https = require('https');
 const Transform = require('stream').Transform;
@@ -297,7 +296,7 @@ function getComprehensiveRules() {
 						response.on('end', function () {
 							comprehensiveRules.updated = rulesDate;
 							comprehensiveRules.lastUpdateCheck = Date.now();
-							parseComprehensiveRules(windows1252.decode(responseData.read().toString('binary')));
+							parseComprehensiveRules(responseData.read().toString('utf8'));
 							resolve(true);
 						});
 					}).end();
