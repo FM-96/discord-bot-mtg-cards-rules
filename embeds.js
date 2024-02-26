@@ -244,10 +244,10 @@ function makeRuleEmbed(data) {
 				value: '',
 			};
 
-			navField.value += data.nav.siblings.list.map((e, i) => (data.nav.siblings.position === i ? `**${e.number}**` : e.number)).join(' - ') + '\n\n';
+			navField.value += data.nav.siblings.list.map((e, i) => (data.nav.siblings.position === i ? `**${e.number}**` : e.number.replace(/\./g, '\\.'))).join(' - ') + '\n\n';
 
 			if (data.nav.subrules.count > 0) {
-				navField.value += data.nav.subrules.list.map(e => e.number).join(' - ') + '\n\n';
+				navField.value += data.nav.subrules.list.map(e => e.number.replace(/\./g, '\\.')).join(' - ') + '\n\n';
 			}
 
 			embed.fields.push(navField);
